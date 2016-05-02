@@ -436,18 +436,18 @@ public class OandaApp extends MessageCracker implements Application {
 		report.setAccount(account.getValue());
 		report.setSymbol(symbol.getValue());
 		report.setSide(side.getValue());
-		report.setOrderQty(orderQty.getValue());
+		report.setOrderQty(BigDecimal.valueOf(orderQty.getValue()));
 		report.setOrdType(ordType.getValue());
-		report.setPrice(price.getValue());
-		report.setStopPx(stopPx.getValue());
+		report.setPrice(BigDecimal.valueOf(price.getValue()));
+		report.setStopPx(BigDecimal.valueOf(stopPx.getValue()));
 		report.setTimeInForce(timeInForce.getValue());
-		report.setExpireTime(expireTime.getValue());
-		report.setLastQty(lastQty.getValue());
-		report.setLastPx(lastPx.getValue());
-		report.setLeavesQty(leavesQty.getValue());
-		report.setCumQty(cumQty.getValue());
-		report.setAvgPx(avgPx.getValue());
-		report.setTransactTime(transactTime.getValue());
+		report.setExpireTime(sdf.format(expireTime.getValue()));
+		report.setLastQty(BigDecimal.valueOf(lastQty.getValue()));
+		report.setLastPx(BigDecimal.valueOf(lastPx.getValue()));
+		report.setLeavesQty(BigDecimal.valueOf(leavesQty.getValue()));
+		report.setCumQty(BigDecimal.valueOf(cumQty.getValue()));
+		report.setAvgPx(BigDecimal.valueOf(avgPx.getValue()));
+		report.setTransactTime(sdf.format(transactTime.getValue()));
 		report.setText(text.getValue());
 		algorithm.addReport(report);
 	}

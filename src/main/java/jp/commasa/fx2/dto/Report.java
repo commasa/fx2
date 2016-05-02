@@ -1,6 +1,6 @@
 package jp.commasa.fx2.dto;
 
-import java.sql.Date;
+import java.math.BigDecimal;
 
 public class Report {
 
@@ -14,18 +14,18 @@ public class Report {
 	private String account;
 	private String symbol;
 	private String side;
-	private double orderQty;
+	private BigDecimal orderQty;
 	private String ordType;
-	private double price;
-	private double stopPx;
+	private BigDecimal price;
+	private BigDecimal stopPx;
 	private String timeInForce;
-	private Date expireTime;
-	private double lastQty;
-	private double lastPx;
-	private double leavesQty;
-	private double cumQty;
-	private double avgPx;
-	private Date transactTime;
+	private String expireTime;
+	private BigDecimal lastQty;
+	private BigDecimal lastPx;
+	private BigDecimal leavesQty;
+	private BigDecimal cumQty;
+	private BigDecimal avgPx;
+	private String transactTime;
 	private String cxlRejResponseTo;
 	private int cxlRejReason;
 	private String text;
@@ -90,10 +90,10 @@ public class Report {
 	public void setSide(String side) {
 		this.side = side;
 	}
-	public double getOrderQty() {
+	public BigDecimal getOrderQty() {
 		return orderQty;
 	}
-	public void setOrderQty(double orderQty) {
+	public void setOrderQty(BigDecimal orderQty) {
 		this.orderQty = orderQty;
 	}
 	public String getOrdType() {
@@ -102,16 +102,16 @@ public class Report {
 	public void setOrdType(String ordType) {
 		this.ordType = ordType;
 	}
-	public double getPrice() {
+	public BigDecimal getPrice() {
 		return price;
 	}
-	public void setPrice(double price) {
+	public void setPrice(BigDecimal price) {
 		this.price = price;
 	}
-	public double getStopPx() {
+	public BigDecimal getStopPx() {
 		return stopPx;
 	}
-	public void setStopPx(double stopPx) {
+	public void setStopPx(BigDecimal stopPx) {
 		this.stopPx = stopPx;
 	}
 	public String getTimeInForce() {
@@ -120,46 +120,46 @@ public class Report {
 	public void setTimeInForce(String timeInForce) {
 		this.timeInForce = timeInForce;
 	}
-	public Date getExpireTime() {
+	public String getExpireTime() {
 		return expireTime;
 	}
-	public void setExpireTime(Date expireTime) {
+	public void setExpireTime(String expireTime) {
 		this.expireTime = expireTime;
 	}
-	public double getLastQty() {
+	public BigDecimal getLastQty() {
 		return lastQty;
 	}
-	public void setLastQty(double lastQty) {
+	public void setLastQty(BigDecimal lastQty) {
 		this.lastQty = lastQty;
 	}
-	public double getLastPx() {
+	public BigDecimal getLastPx() {
 		return lastPx;
 	}
-	public void setLastPx(double lastPx) {
+	public void setLastPx(BigDecimal lastPx) {
 		this.lastPx = lastPx;
 	}
-	public double getLeavesQty() {
+	public BigDecimal getLeavesQty() {
 		return leavesQty;
 	}
-	public void setLeavesQty(double leavesQty) {
+	public void setLeavesQty(BigDecimal leavesQty) {
 		this.leavesQty = leavesQty;
 	}
-	public double getCumQty() {
+	public BigDecimal getCumQty() {
 		return cumQty;
 	}
-	public void setCumQty(double cumQty) {
+	public void setCumQty(BigDecimal cumQty) {
 		this.cumQty = cumQty;
 	}
-	public double getAvgPx() {
+	public BigDecimal getAvgPx() {
 		return avgPx;
 	}
-	public void setAvgPx(double avgPx) {
+	public void setAvgPx(BigDecimal avgPx) {
 		this.avgPx = avgPx;
 	}
-	public Date getTransactTime() {
+	public String getTransactTime() {
 		return transactTime;
 	}
-	public void setTransactTime(Date transactTime) {
+	public void setTransactTime(String transactTime) {
 		this.transactTime = transactTime;
 	}
 	public String getCxlRejResponseTo() {
@@ -195,12 +195,6 @@ public class Report {
 	}
 	public void setTimeInForce(char timeInForce) {
 		this.timeInForce = String.valueOf(timeInForce);
-	}
-	public void setExpireTime(java.util.Date expireTime) {
-		this.expireTime = new Date(expireTime.getTime());
-	}
-	public void setTransactTime(java.util.Date transactTime) {
-		this.transactTime = new Date(transactTime.getTime());
 	}
 
 	@Override
