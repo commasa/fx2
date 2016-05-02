@@ -141,22 +141,36 @@ public class Algorithm {
 		String valHist = gson.toJson(previous);
 		jedis.set(key+":history",  valHist);
 		
-		// 新規注文
+		// 注文
 		List<Order> result = new ArrayList<Order>();
-		int netC1 = ex.getNet().compareTo(BigDecimal.ZERO);
-		int netC2 = ex.getSumlong().subtract(ex.getSumshort()).compareTo(BigDecimal.ZERO);
-		BigDecimal vola = ex.getSumlong().add(ex.getSumshort());
 		Position pos = position.get(key);
 		BigDecimal nowAmt = BigDecimal.ZERO;
 		if (pos!=null) nowAmt = pos.getAmount();
-		if (uniq && vola.compareTo(volatility) >= 0 && nowAmt.abs().compareTo(maxamount) < 0) {
-			if (netC1 > 0 && netC2 > 0 ) {
+		int netC1 = ex.getNet().compareTo(BigDecimal.ZERO);
+		int netC2 = ex.getSumlong().subtract(ex.getSumshort()).compareTo(BigDecimal.ZERO);
+		BigDecimal vola = ex.getSumlong().add(ex.getSumshort());
+		if (uniq) {
+			if ( nowAmt.compareTo(BigDecimal.ZERO) < 0 && netC1 > 0 ) {
+				// 決済
 				Order order = new Order(ex.getSymbol(), amount, ex.getTickNo());
 				result.add(order);
+			} else {
+				if (netC1 > 0 && netC2 > 0 && vola.compareTo(volatility) >= 0 && nowAmt.abs().compareTo(maxamount) < 0) {
+					// 新規
+					Order order = new Order(ex.getSymbol(), amount, ex.getTickNo());
+					result.add(order);
+				}
 			}
-			if (netC1 < 0 && netC2 < 0 ) {
+			if ( nowAmt.compareTo(BigDecimal.ZERO) > 0 && netC1 < 0 ) {
+				// 決済
 				Order order = new Order(ex.getSymbol(), amount.multiply(new BigDecimal(-1)), ex.getTickNo());
 				result.add(order);
+			} else {
+				if (netC1 < 0 && netC2 < 0 && vola.compareTo(volatility) >= 0 && nowAmt.abs().compareTo(maxamount) < 0) {
+					// 新規
+					Order order = new Order(ex.getSymbol(), amount.multiply(new BigDecimal(-1)), ex.getTickNo());
+					result.add(order);
+				}
 			}
 		}
 		log.debug(ex.getSymbol()+"("+ ex.getTickNo().toPlainString() +") = result["+result.size()+"] : netC1="+netC1+" netC2="+netC2+" vola="+vola+" nowAmt="+nowAmt);
@@ -185,7 +199,7 @@ public class Algorithm {
 		BigDecimal tickNo = new BigDecimal("9000000000");
 		for (Map.Entry<String, Position> entry : position.entrySet()) {
 			tickNo = tickNo.add(BigDecimal.ONE);
-			Order order = new Order(entry.getKey(), entry.getValue().getAmount(), tickNo);
+			Order order = new Order(entry.getKey(), entry.getValue().getAmount().multiply(new BigDecimal(-1)), tickNo);
 			result.add(order);
 		}
 		pool.close();
