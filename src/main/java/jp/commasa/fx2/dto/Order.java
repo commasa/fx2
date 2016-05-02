@@ -1,143 +1,36 @@
 package jp.commasa.fx2.dto;
 
 import java.math.BigDecimal;
-import java.sql.Date;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 
 public class Order {
 
-	protected static final SimpleDateFormat sdfDate = new SimpleDateFormat("yyyyMMdd");
-
-	private String orderID;
-	private String origClOrdID;
-	private String clOrdID;
-	private String account;
 	private String symbol;
-	private String side;
-	private Date transactTime;
-	private Double orderQty;
-	private String ordType;
-	private Double price;
-	private Double stopPx;
-	private String timeInForce;
-	private Date expireDate;
-	private Date expireTime;
+	private BigDecimal amount;
 	private BigDecimal tickNo;
-	private String openClOrdID;
-
-	public String getOrderID() {
-		return orderID;
+	
+	public Order(String symbol, BigDecimal amount, BigDecimal tickNo) {
+		this.symbol = symbol;
+		this.amount = (amount==null ? BigDecimal.ZERO : amount);
+		this.tickNo = (tickNo==null ? BigDecimal.ZERO : tickNo);
 	}
-	public void setOrderID(String orderID) {
-		this.orderID = orderID;
-	}
-	public String getOrigClOrdID() {
-		return origClOrdID;
-	}
-	public void setOrigClOrdID(String origClOrdID) {
-		this.origClOrdID = origClOrdID;
-	}
-	public String getClOrdID() {
-		return clOrdID;
-	}
-	public void setClOrdID(String clOrdID) {
-		this.clOrdID = clOrdID;
-	}
-	public String getAccount() {
-		return account;
-	}
-	public void setAccount(String account) {
-		this.account = account;
-	}
+	
 	public String getSymbol() {
 		return symbol;
 	}
-	public void setSymbol(String symbol) {
-		this.symbol = symbol;
-	}
-	public String getSide() {
-		return side;
-	}
-	public void setSide(String side) {
-		this.side = side;
-	}
-	public Date getTransactTime() {
-		return transactTime;
-	}
-	public void setTransactTime(Date transactTime) {
-		this.transactTime = transactTime;
-	}
-	public Double getOrderQty() {
-		return orderQty;
-	}
-	public void setOrderQty(Double orderQty) {
-		this.orderQty = orderQty;
-	}
-	public String getOrdType() {
-		return ordType;
-	}
-	public void setOrdType(String ordType) {
-		this.ordType = ordType;
-	}
-	public Double getPrice() {
-		return price;
-	}
-	public void setPrice(Double price) {
-		this.price = price;
-	}
-	public Double getStopPx() {
-		return stopPx;
-	}
-	public void setStopPx(Double stopPx) {
-		this.stopPx = stopPx;
-	}
-	public String getTimeInForce() {
-		return timeInForce;
-	}
-	public void setTimeInForce(String timeInForce) {
-		this.timeInForce = timeInForce;
-	}
-	public Date getExpireDate() {
-		return expireDate;
-	}
-	public void setExpireDate(Date expireDate) {
-		this.expireDate = expireDate;
-	}
-	public Date getExpireTime() {
-		return expireTime;
-	}
-	public void setExpireTime(Date expireTime) {
-		this.expireTime = expireTime;
+	public BigDecimal getAmount() {
+		return amount;
 	}
 	public BigDecimal getTickNo() {
 		return tickNo;
 	}
-	public void setTickNo(BigDecimal tickNo) {
-		this.tickNo = tickNo;
+	public char getSide() {
+		int c = this.amount.compareTo(BigDecimal.ZERO);
+		if (c>0) return '1';
+		if (c<0) return '2';
+		return '0';
 	}
-	public String getOpenClOrdID() {
-		return openClOrdID;
+	public double getQty() {
+		return this.amount.abs().doubleValue();
 	}
-	public void setOpenClOrdID(String openClOrdID) {
-		this.openClOrdID = openClOrdID;
-	}
-
-	public void setExpireDate(String expireDate) {
-		try {
-			this.expireDate = new java.sql.Date(sdfDate.parse(expireDate).getTime());
-		} catch (ParseException e) {}
-	}
-
-	@Override
-	public String toString() {
-		return "Orders [orderID=" + orderID + ", origClOrdID=" + origClOrdID
-				+ ", clOrdID=" + clOrdID + ", account=" + account + ", symbol="
-				+ symbol + ", side=" + side + ", transactTime=" + transactTime
-				+ ", orderQty=" + orderQty + ", ordType=" + ordType
-				+ ", price=" + price + ", stopPx=" + stopPx + ", timeInForce="
-				+ timeInForce + ", expireDate=" + expireDate + ", expireTime="
-				+ expireTime + ", tickNo=" + tickNo + ", openClOrdID=" + openClOrdID + "]";
-	}
-
+	
 }
