@@ -86,23 +86,30 @@ public class Algorithm {
 		if (previous.size() > 0) prev = previous.get(previous.size()-1);
 		if (prev != null) {
 			if (p.getTickNo()!=null && !p.getTickNo().equals(prev.getTickNo())) {
-				BigDecimal scale = BigDecimal.valueOf(10000);
-				if (p.getSymbol().endsWith("JPY")) scale=BigDecimal.valueOf(100);
-				BigDecimal ca = BigDecimal.valueOf(p.getAsk());
-				BigDecimal cb = BigDecimal.valueOf(p.getBid());
-				BigDecimal pa = BigDecimal.valueOf(prev.getAsk());
-				BigDecimal pb = BigDecimal.valueOf(prev.getBid());
-				BigDecimal cm = ca.add(cb).divide(BigDecimal.valueOf(2));
-				BigDecimal pm = pa.add(pb).divide(BigDecimal.valueOf(2));
-				BigDecimal csp = ca.subtract(cb);
-				BigDecimal psp = pa.subtract(pb);
-				ex.setDiff( cm.subtract(pm).multiply(scale).setScale(1, BigDecimal.ROUND_HALF_UP) );
-				ex.setDiffsp( csp.subtract(psp).multiply(scale).setScale(1, BigDecimal.ROUND_HALF_UP) );
-				ex.setSumlong(prev.getSumlong());
-				ex.setSumshort(prev.getSumshort());
-				int c = ex.getDiff().compareTo(BigDecimal.ZERO);
-				if (c > 0) ex.setSumlong(ex.getSumlong().add(ex.getDiff()));
-				if (c < 0) ex.setSumshort(ex.getSumshort().add(ex.getDiff().abs()));
+				if (p.getAsk() > 0 && p.getBid() > 0 && prev.getAsk() > 0 && prev.getBid() > 0) {
+					BigDecimal scale = BigDecimal.valueOf(10000);
+					if (p.getSymbol().endsWith("JPY")) scale=BigDecimal.valueOf(100);
+					BigDecimal ca = BigDecimal.valueOf(p.getAsk());
+					BigDecimal cb = BigDecimal.valueOf(p.getBid());
+					BigDecimal pa = BigDecimal.valueOf(prev.getAsk());
+					BigDecimal pb = BigDecimal.valueOf(prev.getBid());
+					BigDecimal cm = ca.add(cb).divide(BigDecimal.valueOf(2));
+					BigDecimal pm = pa.add(pb).divide(BigDecimal.valueOf(2));
+					BigDecimal csp = ca.subtract(cb);
+					BigDecimal psp = pa.subtract(pb);
+					ex.setDiff( cm.subtract(pm).multiply(scale).setScale(1, BigDecimal.ROUND_HALF_UP) );
+					ex.setDiffsp( csp.subtract(psp).multiply(scale).setScale(1, BigDecimal.ROUND_HALF_UP) );
+					ex.setSumlong(prev.getSumlong());
+					ex.setSumshort(prev.getSumshort());
+					int c = ex.getDiff().compareTo(BigDecimal.ZERO);
+					if (c > 0) ex.setSumlong(ex.getSumlong().add(ex.getDiff()));
+					if (c < 0) ex.setSumshort(ex.getSumshort().add(ex.getDiff().abs()));
+				} else {
+					ex.setDiff(prev.getDiff());
+					ex.setDiffsp(prev.getDiffsp());
+					ex.setSumlong(prev.getSumlong());
+					ex.setSumshort(prev.getSumshort());
+				}
 				previous.add(ex);
 				uniq = true;
 			} else {
@@ -142,10 +149,17 @@ public class Algorithm {
 		jedis.set(key+":history",  valHist);
 		
 		// 注文
-		List<Order> result = new ArrayList<Order>();
 		Position pos = position.get(key);
-		BigDecimal nowAmt = BigDecimal.ZERO;
-		if (pos!=null) nowAmt = pos.getAmount();
+		if (pos == null) {
+			pos = new Position();
+			position.put(key, pos);
+		}
+		if (pos.getOrderCount() > 0) {
+			log.info("order skip: order count = " + pos.getOrderCount()); 
+			return null;
+		}
+		List<Order> result = new ArrayList<Order>();
+		BigDecimal nowAmt = pos.getAmount();
 		int netC1 = ex.getNet().compareTo(BigDecimal.ZERO);
 		int netC2 = ex.getSumlong().subtract(ex.getSumshort()).compareTo(BigDecimal.ZERO);
 		BigDecimal vola = ex.getSumlong().add(ex.getSumshort());
@@ -154,22 +168,26 @@ public class Algorithm {
 				// 決済
 				Order order = new Order(ex.getSymbol(), amount, ex.getTickNo());
 				result.add(order);
+				pos.orderCount(1);
 			} else {
 				if (netC1 > 0 && netC2 > 0 && vola.compareTo(volatility) >= 0 && nowAmt.abs().compareTo(maxamount) < 0) {
 					// 新規
 					Order order = new Order(ex.getSymbol(), amount, ex.getTickNo());
 					result.add(order);
+					pos.orderCount(1);
 				}
 			}
 			if ( nowAmt.compareTo(BigDecimal.ZERO) > 0 && netC1 < 0 ) {
 				// 決済
 				Order order = new Order(ex.getSymbol(), amount.multiply(BigDecimal.valueOf(-1)), ex.getTickNo());
 				result.add(order);
+				pos.orderCount(1);
 			} else {
 				if (netC1 < 0 && netC2 < 0 && vola.compareTo(volatility) >= 0 && nowAmt.abs().compareTo(maxamount) < 0) {
 					// 新規
 					Order order = new Order(ex.getSymbol(), amount.multiply(BigDecimal.valueOf(-1)), ex.getTickNo());
 					result.add(order);
+					pos.orderCount(1);
 				}
 			}
 		}
@@ -184,13 +202,20 @@ public class Algorithm {
 			pos = new Position();
 			position.put(key, pos);
 		}
-		pos.addReport(report);
-		if (jedis == null || jedis.isConnected() == false) {
-			pool = new JedisPool(new JedisPoolConfig(), "localhost");
-			jedis = pool.getResource();
+		pos.addReport(Report.getTrans(report));
+		/*
+		try {
+			if (jedis == null || jedis.isConnected() == false) {
+				pool = new JedisPool(new JedisPoolConfig(), "localhost");
+				jedis = pool.getResource();
+			}
+			String val = gson.toJson(pos);
+			jedis.set(key+":position",  val);
+		} catch (Exception e) {
+			log.error("write position: " + pos.toString(), e);
 		}
-		String val = gson.toJson(pos);
-		jedis.set(key+":position",  val);
+		*/
+		pos.orderCount(-1);
 	}
 
 	public List<Order> finish() {

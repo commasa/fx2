@@ -2,9 +2,8 @@ package jp.commasa.fx2.dto;
 
 import java.math.BigDecimal;
 
-public class Report {
+public class Report extends Trans {
 
-	private String orderID;
 	private String origClOrdID;
 	private String clOrdID;
 	private String execID;
@@ -12,8 +11,6 @@ public class Report {
 	private String ordStatus;
 	private int ordRejReason;
 	private String account;
-	private String symbol;
-	private String side;
 	private BigDecimal orderQty;
 	private String ordType;
 	private BigDecimal price;
@@ -23,19 +20,10 @@ public class Report {
 	private BigDecimal lastQty;
 	private BigDecimal lastPx;
 	private BigDecimal leavesQty;
-	private BigDecimal cumQty;
-	private BigDecimal avgPx;
-	private String transactTime;
 	private String cxlRejResponseTo;
-	private int cxlRejReason;
+	private BigDecimal cxlRejReason;
 	private String text;
 
-	public String getOrderID() {
-		return orderID;
-	}
-	public void setOrderID(String orderID) {
-		this.orderID = orderID;
-	}
 	public String getOrigClOrdID() {
 		return origClOrdID;
 	}
@@ -77,18 +65,6 @@ public class Report {
 	}
 	public void setAccount(String account) {
 		this.account = account;
-	}
-	public String getSymbol() {
-		return symbol;
-	}
-	public void setSymbol(String symbol) {
-		this.symbol = symbol;
-	}
-	public String getSide() {
-		return side;
-	}
-	public void setSide(String side) {
-		this.side = side;
 	}
 	public BigDecimal getOrderQty() {
 		return orderQty;
@@ -144,34 +120,16 @@ public class Report {
 	public void setLeavesQty(BigDecimal leavesQty) {
 		this.leavesQty = leavesQty;
 	}
-	public BigDecimal getCumQty() {
-		return cumQty;
-	}
-	public void setCumQty(BigDecimal cumQty) {
-		this.cumQty = cumQty;
-	}
-	public BigDecimal getAvgPx() {
-		return avgPx;
-	}
-	public void setAvgPx(BigDecimal avgPx) {
-		this.avgPx = avgPx;
-	}
-	public String getTransactTime() {
-		return transactTime;
-	}
-	public void setTransactTime(String transactTime) {
-		this.transactTime = transactTime;
-	}
 	public String getCxlRejResponseTo() {
 		return cxlRejResponseTo;
 	}
 	public void setCxlRejResponseTo(String cxlRejResponseTo) {
 		this.cxlRejResponseTo = cxlRejResponseTo;
 	}
-	public int getCxlRejReason() {
+	public BigDecimal getCxlRejReason() {
 		return cxlRejReason;
 	}
-	public void setCxlRejReason(int cxlRejReason) {
+	public void setCxlRejReason(BigDecimal cxlRejReason) {
 		this.cxlRejReason = cxlRejReason;
 	}
 	public String getText() {
@@ -181,14 +139,14 @@ public class Report {
 		this.text = text;
 	}
 
+	public void setSide(char side) {
+		this.side = String.valueOf(side);
+	}
 	public void setExecType(char execType) {
 		this.execType = String.valueOf(execType);
 	}
 	public void setOrdStatus(char ordStatus) {
 		this.ordStatus = String.valueOf(ordStatus);
-	}
-	public void setSide(char side) {
-		this.side = String.valueOf(side);
 	}
 	public void setOrdType(char ordType) {
 		this.ordType = String.valueOf(ordType);
@@ -213,4 +171,14 @@ public class Report {
 				+ cxlRejReason + ", text=" + text + "]";
 	}
 
+	public static Trans getTrans(Report report) {
+		Trans result = new Trans();
+		result.orderID = report.orderID;
+		result.symbol = report.symbol;
+		result.side = report.side;
+		result.cumQty = report.cumQty;
+		result.avgPx = report.avgPx;
+		result.transactTime = report.transactTime;
+		return result;
+	}
 }

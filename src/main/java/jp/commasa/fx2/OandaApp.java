@@ -112,7 +112,7 @@ public class OandaApp extends MessageCracker implements Application {
 
 	@Override
 	public void fromAdmin(Message message, SessionID sessionId) throws FieldNotFound, IncorrectDataFormat, IncorrectTagValue, RejectLogon {
-		log.debug("fromAdmin : SessionID=" + sessionId.toString() + " , Message=" + message.getClass().getName());
+		log.trace("fromAdmin : SessionID=" + sessionId.toString() + " , Message=" + message.getClass().getName());
 	}
 
 	@Override
@@ -173,7 +173,7 @@ public class OandaApp extends MessageCracker implements Application {
 				}
 				message.setField(new ResetSeqNumFlag(true));
 			}
-			log.debug("toAdmin : SessionID=" + sessionID.toString() + " , Message=" + message.getClass().getName());
+			log.trace("toAdmin : SessionID=" + sessionID.toString() + " , Message=" + message.getClass().getName());
 		} catch (Exception e) {
 			log.error("ERROR toAdmin : ", e);
 		}
@@ -181,7 +181,7 @@ public class OandaApp extends MessageCracker implements Application {
 
 	@Override
 	public void toApp(Message message, SessionID sessionId) throws DoNotSend {
-		log.debug("toApp : SessionID=" + sessionId.toString() + " , Message=" + message.getClass().getName());
+		log.trace("toApp : SessionID=" + sessionId.toString() + " , Message=" + message.getClass().getName());
 	}
 
 	public void requestMarketData() throws SessionNotFound {
@@ -258,23 +258,27 @@ public class OandaApp extends MessageCracker implements Application {
 						p.setTickNo(BigDecimal.valueOf(seqNum.getValue()));
 					}
 				}
+				runAlgorithm();
 			}
-			for (Map.Entry<String, Price> entry : current.entrySet()) {
-				BigDecimal t = tickNo.get(entry.getKey());
-				// tickNo が変更された時のみする
-				if (t==null || entry.getValue().getTickNo()==null || !t.equals(entry.getValue().getTickNo())) {
-					List<Order> orderList = algorithm.run(entry.getValue());
-					if (orderList != null) {
-						for (Order order : orderList) {
-							try {
-								newOrder(order);
-							} catch (SessionNotFound e) {
-								log.error("new Order", e);
-							}
+		}
+	}
+	
+	private void runAlgorithm() {
+		for (Map.Entry<String, Price> entry : current.entrySet()) {
+			BigDecimal t = tickNo.get(entry.getKey());
+			// tickNo が変更された時のみする
+			if (t==null || entry.getValue().getTickNo()==null || !t.equals(entry.getValue().getTickNo())) {
+				List<Order> orderList = algorithm.run(entry.getValue());
+				if (orderList != null) {
+					for (Order order : orderList) {
+						try {
+							newOrder(order);
+						} catch (SessionNotFound e) {
+							log.error("new Order", e);
 						}
 					}
-					tickNo.put(entry.getKey(), entry.getValue().getTickNo());
 				}
+				tickNo.put(entry.getKey(), entry.getValue().getTickNo());
 			}
 		}
 	}
@@ -316,23 +320,7 @@ public class OandaApp extends MessageCracker implements Application {
 					}
 				}
 			}
-			for (Map.Entry<String, Price> entry : current.entrySet()) {
-				BigDecimal t = tickNo.get(entry.getKey());
-				// tickNo が変更された時のみする
-				if (t==null || entry.getValue().getTickNo()==null || !t.equals(entry.getValue().getTickNo())) {
-					List<Order> orderList = algorithm.run(entry.getValue());
-					if (orderList != null) {
-						for (Order order : orderList) {
-							try {
-								newOrder(order);
-							} catch (SessionNotFound e) {
-								log.error("new Order", e);
-							}
-						}
-					}
-					tickNo.put(entry.getKey(), entry.getValue().getTickNo());
-				}
-			}
+			runAlgorithm();
 		}
 	}
 
@@ -436,17 +424,17 @@ public class OandaApp extends MessageCracker implements Application {
 		report.setAccount(account.getValue());
 		report.setSymbol(symbol.getValue());
 		report.setSide(side.getValue());
-		report.setOrderQty(BigDecimal.valueOf(orderQty.getValue()));
+		report.setOrderQty(BigDecimal.valueOf(orderQty.getValue()).setScale(0, BigDecimal.ROUND_HALF_UP));
 		report.setOrdType(ordType.getValue());
-		report.setPrice(BigDecimal.valueOf(price.getValue()));
-		report.setStopPx(BigDecimal.valueOf(stopPx.getValue()));
+		report.setPrice(BigDecimal.valueOf(price.getValue()).setScale(5, BigDecimal.ROUND_HALF_UP));
+		report.setStopPx(BigDecimal.valueOf(stopPx.getValue()).setScale(5, BigDecimal.ROUND_HALF_UP));
 		report.setTimeInForce(timeInForce.getValue());
 		report.setExpireTime(sdf.format(expireTime.getValue()));
-		report.setLastQty(BigDecimal.valueOf(lastQty.getValue()));
-		report.setLastPx(BigDecimal.valueOf(lastPx.getValue()));
-		report.setLeavesQty(BigDecimal.valueOf(leavesQty.getValue()));
-		report.setCumQty(BigDecimal.valueOf(cumQty.getValue()));
-		report.setAvgPx(BigDecimal.valueOf(avgPx.getValue()));
+		report.setLastQty(BigDecimal.valueOf(lastQty.getValue()).setScale(0, BigDecimal.ROUND_HALF_UP));
+		report.setLastPx(BigDecimal.valueOf(lastPx.getValue()).setScale(5, BigDecimal.ROUND_HALF_UP));
+		report.setLeavesQty(BigDecimal.valueOf(leavesQty.getValue()).setScale(0, BigDecimal.ROUND_HALF_UP));
+		report.setCumQty(BigDecimal.valueOf(cumQty.getValue()).setScale(0, BigDecimal.ROUND_HALF_UP));
+		report.setAvgPx(BigDecimal.valueOf(avgPx.getValue()).setScale(5, BigDecimal.ROUND_HALF_UP));
 		report.setTransactTime(sdf.format(transactTime.getValue()));
 		report.setText(text.getValue());
 		algorithm.addReport(report);
@@ -462,6 +450,11 @@ public class OandaApp extends MessageCracker implements Application {
 					log.error("new Order", e);
 				}
 			}
+		}
+		try {
+			log.info("waiting orders...");
+			Thread.sleep(5000);
+		} catch (InterruptedException e) {
 		}
 	}
 
