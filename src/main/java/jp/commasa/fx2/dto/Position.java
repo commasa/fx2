@@ -54,7 +54,7 @@ public class Position {
 				if (report.getSide().equals("1")) {
 					BigDecimal amt = new BigDecimal(report.getCumQty());
 					while (reports.size()>0 || amt.compareTo(BigDecimal.ZERO)>0) {
-						BigDecimal tmp = new BigDecimal(reports.get(0).getCumQty());
+						BigDecimal tmp = BigDecimal.valueOf(reports.get(0).getCumQty());
 						amt = amt.subtract(tmp);
 						if (amt.compareTo(BigDecimal.ZERO) >= 0) {
 							reports.remove(0);
