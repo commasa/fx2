@@ -33,9 +33,9 @@ public class Algorithm {
 	private Map<String, Position> position = new HashMap<String, Position>();
 	private int size = 100;
 	private int net = 5;
-	private BigDecimal amount = new BigDecimal(10000);
-	private BigDecimal volatility = new BigDecimal(20);
-	private BigDecimal maxamount = new BigDecimal(30000);
+	private BigDecimal amount = BigDecimal.valueOf(10000);
+	private BigDecimal volatility = BigDecimal.valueOf(20);
+	private BigDecimal maxamount = BigDecimal.valueOf(30000);
 
 	public Algorithm(ResourceBundle bundle) {
 		this.bundle = bundle;
@@ -86,14 +86,14 @@ public class Algorithm {
 		if (previous.size() > 0) prev = previous.get(previous.size()-1);
 		if (prev != null) {
 			if (p.getTickNo()!=null && !p.getTickNo().equals(prev.getTickNo())) {
-				BigDecimal scale = new BigDecimal(10000);
-				if (p.getSymbol().endsWith("JPY")) scale=new BigDecimal(100);
-				BigDecimal ca = new BigDecimal(p.getAsk());
-				BigDecimal cb = new BigDecimal(p.getBid());
-				BigDecimal pa = new BigDecimal(prev.getAsk());
-				BigDecimal pb = new BigDecimal(prev.getBid());
-				BigDecimal cm = ca.add(cb).divide(new BigDecimal(2));
-				BigDecimal pm = pa.add(pb).divide(new BigDecimal(2));
+				BigDecimal scale = BigDecimal.valueOf(10000);
+				if (p.getSymbol().endsWith("JPY")) scale=BigDecimal.valueOf(100);
+				BigDecimal ca = BigDecimal.valueOf(p.getAsk());
+				BigDecimal cb = BigDecimal.valueOf(p.getBid());
+				BigDecimal pa = BigDecimal.valueOf(prev.getAsk());
+				BigDecimal pb = BigDecimal.valueOf(prev.getBid());
+				BigDecimal cm = ca.add(cb).divide(BigDecimal.valueOf(2));
+				BigDecimal pm = pa.add(pb).divide(BigDecimal.valueOf(2));
 				BigDecimal csp = ca.subtract(cb);
 				BigDecimal psp = pa.subtract(pb);
 				ex.setDiff( cm.subtract(pm).multiply(scale).setScale(1, BigDecimal.ROUND_HALF_UP) );
@@ -163,12 +163,12 @@ public class Algorithm {
 			}
 			if ( nowAmt.compareTo(BigDecimal.ZERO) > 0 && netC1 < 0 ) {
 				// 決済
-				Order order = new Order(ex.getSymbol(), amount.multiply(new BigDecimal(-1)), ex.getTickNo());
+				Order order = new Order(ex.getSymbol(), amount.multiply(BigDecimal.valueOf(-1)), ex.getTickNo());
 				result.add(order);
 			} else {
 				if (netC1 < 0 && netC2 < 0 && vola.compareTo(volatility) >= 0 && nowAmt.abs().compareTo(maxamount) < 0) {
 					// 新規
-					Order order = new Order(ex.getSymbol(), amount.multiply(new BigDecimal(-1)), ex.getTickNo());
+					Order order = new Order(ex.getSymbol(), amount.multiply(BigDecimal.valueOf(-1)), ex.getTickNo());
 					result.add(order);
 				}
 			}
@@ -196,10 +196,10 @@ public class Algorithm {
 	public List<Order> finish() {
 		//スクエア注文
 		List<Order> result = new ArrayList<Order>();
-		BigDecimal tickNo = new BigDecimal("9000000000");
+		BigDecimal tickNo = BigDecimal.valueOf(9000000000L);
 		for (Map.Entry<String, Position> entry : position.entrySet()) {
 			tickNo = tickNo.add(BigDecimal.ONE);
-			Order order = new Order(entry.getKey(), entry.getValue().getAmount().multiply(new BigDecimal(-1)), tickNo);
+			Order order = new Order(entry.getKey(), entry.getValue().getAmount().multiply(BigDecimal.valueOf(-1)), tickNo);
 			result.add(order);
 		}
 		pool.close();
