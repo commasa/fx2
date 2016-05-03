@@ -105,7 +105,7 @@ public class Position {
 	public String getPL(BigDecimal p) {
 		if (p==null) return "price is invalid.";
 		BigDecimal pl = this.amount.multiply(p).subtract(this.changeamount);
-		BigDecimal unit = pl.divide(this.totalamount, 4, BigDecimal.ROUND_HALF_UP);
+		BigDecimal unit = (this.totalamount.compareTo(BigDecimal.ZERO) == 0 ? BigDecimal.ZERO : pl.divide(this.totalamount, 4, BigDecimal.ROUND_HALF_UP));
 		return "PL = " + pl.toPlainString() + " UNIT = " + unit.toPlainString();
 	}
 
