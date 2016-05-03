@@ -32,8 +32,8 @@ public class Algorithm {
 	private Map<String, List<PriceEx>> history = new HashMap<String, List<PriceEx>>();
 	private Map<String, Position> position = new HashMap<String, Position>();
 	private int size = 100;
-	private int netopen = 5;
-	private int netclose = 10;
+	private int movavg1 = 45;
+	private int movavg2 = 15;
 	private BigDecimal amount = BigDecimal.valueOf(10000);
 	private BigDecimal volatility = BigDecimal.valueOf(20);
 	private BigDecimal maxamount = BigDecimal.valueOf(30000);
@@ -47,12 +47,12 @@ public class Algorithm {
 			log.info("Parameter(size) is invalid.", e);
 		}
 		try {
-			String value = this.bundle.getString("netopen");
-			netopen = Integer.valueOf(value);
-			value = this.bundle.getString("netclose");
-			netclose = Integer.valueOf(value);
+			String value = this.bundle.getString("movavg1");
+			movavg1 = Integer.valueOf(value);
+			value = this.bundle.getString("movavg2");
+			movavg2 = Integer.valueOf(value);
 		} catch(Exception e) {
-			log.info("Parameter(net) is invalid.", e);
+			log.info("Parameter(movavg1,movavg2) is invalid.", e);
 		}
 		try {
 			String value = this.bundle.getString("amount");
@@ -89,71 +89,117 @@ public class Algorithm {
 		if (previous.size() > 0) prev = previous.get(previous.size()-1);
 		if (prev != null) {
 			if (p.getTickNo()!=null && !p.getTickNo().equals(prev.getTickNo())) {
-				if (p.getAsk() > 0 && p.getBid() > 0 && prev.getAsk() > 0 && prev.getBid() > 0) {
-					BigDecimal scale = BigDecimal.valueOf(10000);
-					if (p.getSymbol().endsWith("JPY")) scale=BigDecimal.valueOf(100);
-					BigDecimal ca = BigDecimal.valueOf(p.getAsk());
-					BigDecimal cb = BigDecimal.valueOf(p.getBid());
-					BigDecimal pa = BigDecimal.valueOf(prev.getAsk());
-					BigDecimal pb = BigDecimal.valueOf(prev.getBid());
-					BigDecimal cm = ca.add(cb).divide(BigDecimal.valueOf(2));
-					BigDecimal pm = pa.add(pb).divide(BigDecimal.valueOf(2));
-					BigDecimal csp = ca.subtract(cb);
-					BigDecimal psp = pa.subtract(pb);
-					ex.setDiff( cm.subtract(pm).multiply(scale).setScale(1, BigDecimal.ROUND_HALF_UP) );
-					ex.setDiffsp( csp.subtract(psp).multiply(scale).setScale(1, BigDecimal.ROUND_HALF_UP) );
-					ex.setSumlong(prev.getSumlong());
-					ex.setSumshort(prev.getSumshort());
-					int c = ex.getDiff().compareTo(BigDecimal.ZERO);
-					if (c > 0) ex.setSumlong(ex.getSumlong().add(ex.getDiff()));
-					if (c < 0) ex.setSumshort(ex.getSumshort().add(ex.getDiff().abs()));
-				} else {
-					ex.setDiff(prev.getDiff());
-					ex.setDiffsp(prev.getDiffsp());
-					ex.setSumlong(prev.getSumlong());
-					ex.setSumshort(prev.getSumshort());
-				}
 				previous.add(ex);
 				uniq = true;
-			} else {
-				ex.setDiff(prev.getDiff());
-				ex.setDiffsp(prev.getDiffsp());
-				ex.setSumlong(prev.getSumlong());
-				ex.setSumshort(prev.getSumshort());
 			}
 		} else {
-			ex.setDiff(BigDecimal.ZERO);
-			ex.setDiffsp(BigDecimal.ZERO);
 			previous.add(ex);
 		}
 		//保持対象外となったデータの削除
 		while (previous.size()>size) {
-			PriceEx d = previous.get(0);
-			int c = d.getDiff().compareTo(BigDecimal.ZERO);
-			if (c > 0) ex.setSumlong(ex.getSumlong().subtract(d.getDiff()));
-			if (c < 0) ex.setSumshort(ex.getSumshort().subtract(d.getDiff().abs()));			
 			previous.remove(0);
 		}
-		if (previous.size() > netopen) {
-			int s = previous.size() - netopen;
-			BigDecimal n = BigDecimal.ZERO;
-			for (int i=s; i<previous.size(); i++) {
-				n = n.add(previous.get(i).getDiff());
+		double scale = 10000;
+		if (ex.getSymbol().endsWith("JPY")) scale=100;
+		//ボリジャーバンドもどき
+		int ma1len = movavg1;
+		double v1 = 0;
+		if (previous.size() > movavg1) {
+			int st = previous.size() - movavg1;
+			double sum = 0;
+			for (int i=st; i<previous.size(); i++) {
+				if (previous.get(i).getAsk() > 0 && previous.get(i).getBid() > 0) {
+					sum += previous.get(i).getMid();
+				} else {
+					ma1len--;
+				}
+				if (i > 0) v1 += Math.abs(previous.get(i).getMid()-previous.get(i-1).getMid());
 			}
-			ex.setNetopen(n);
-		} else {
-			ex.setNetopen(BigDecimal.ZERO);
-		}
-		if (previous.size() > netclose) {
-			int s = previous.size() - netclose;
-			BigDecimal n = BigDecimal.ZERO;
-			for (int i=s; i<previous.size(); i++) {
-				n = n.add(previous.get(i).getDiff());
+			if (ma1len>0) { ex.setMovAvg1(sum/ma1len); } else { ex.setMovAvg1(0D); }
+			ex.setVolatility1(v1*scale);
+			sum = 0;
+			for (int i=st; i<previous.size(); i++) {
+				if (previous.get(i).getAsk() > 0 && previous.get(i).getBid() > 0) {
+					sum += Math.pow(previous.get(i).getMid()-ex.getMovAvg1(),2);
+				}
 			}
-			ex.setNetclose(n);
+			if (ma1len>0) { ex.setAlpha1(sum/ma1len); } else { ex.setAlpha1(0D); }
 		} else {
-			ex.setNetclose(BigDecimal.ZERO);
+			ex.setMovAvg1(0D);
+			ex.setAlpha1(0D);
+			ex.setVolatility1(0D);
 		}
+		double v2 = 0;
+		int ma2len = movavg2;
+		if (previous.size() > movavg2) {
+			int st = previous.size() - movavg2;
+			double sum = 0;
+			for (int i=st; i<previous.size(); i++) {
+				if (previous.get(i).getAsk() > 0 && previous.get(i).getBid() > 0) {
+					sum += previous.get(i).getMid();
+				} else {
+					ma2len--;
+				}
+				if (i > 0) v2 += Math.abs(previous.get(i).getMid()-previous.get(i-1).getMid());
+			}
+			if (ma2len>0) { ex.setMovAvg2(sum/ma2len); } else { ex.setMovAvg2(0D); }
+			ex.setVolatility2(v2*scale);
+			sum = 0;
+			for (int i=st; i<previous.size(); i++) {
+				if (previous.get(i).getAsk() > 0 && previous.get(i).getBid() > 0) {
+					sum += Math.pow(previous.get(i).getMid()-ex.getMovAvg2(),2);
+				}
+			}
+			if (ma2len>0) { ex.setAlpha2(sum/ma2len); } else { ex.setAlpha2(0D); }
+		} else {
+			ex.setMovAvg2(0D);
+			ex.setAlpha2(0D);
+			ex.setVolatility2(0D);
+		}
+		// status
+		if (ex.getMovAvg1() < 1) {
+			ex.setStatus("");
+		} else {
+			double mid = ex.getMid();
+			double work = Math.abs(mid - ex.getMovAvg1());
+			ex.setStatus("MA");
+			if ( Math.abs(mid - (ex.getMovAvg1() + ex.getAlpha1())) < work ) {
+				work = Math.abs(mid - (ex.getMovAvg1() + ex.getAlpha1()));
+				ex.setStatus("+a1");
+			}
+			if ( Math.abs(mid - (ex.getMovAvg1() - ex.getAlpha1())) < work ) {
+				work = Math.abs(mid - (ex.getMovAvg1() - ex.getAlpha1()));
+				ex.setStatus("-a1");
+			}
+			if ( Math.abs(mid - (ex.getMovAvg1() + 2*ex.getAlpha1())) < work ) {
+				work = Math.abs(mid - (ex.getMovAvg1() + 2*ex.getAlpha1()));
+				ex.setStatus("+a2");
+			}
+			if ( Math.abs(mid - (ex.getMovAvg1() - 2*ex.getAlpha1())) < work ) {
+				work = Math.abs(mid - (ex.getMovAvg1() - 2*ex.getAlpha1()));
+				ex.setStatus("-a2");
+			}
+			if ( Math.abs(mid - (ex.getMovAvg1() + 3*ex.getAlpha1())) < work ) {
+				work = Math.abs(mid - (ex.getMovAvg1() + 3*ex.getAlpha1()));
+				ex.setStatus("+a3");
+			}
+			if ( Math.abs(mid - (ex.getMovAvg1() - 3*ex.getAlpha1())) < work ) {
+				work = Math.abs(mid - (ex.getMovAvg1() - 3*ex.getAlpha1()));
+				ex.setStatus("-a3");
+			}
+		}
+		int cnt = 0;
+		String status = ex.getStatus();
+		for (int i=previous.size()-1; i>=0; i--) {
+			if ( status.equals(previous.get(i).getStatus()) ) {
+				cnt++;
+			} else {
+				break;
+			}
+		}
+		ex.setStatusCount(cnt);
+
+		// 書き込み
 		String key = p.getSymbol();
 		String val = gson.toJson(ex);
 		jedis.set(key,  val);
@@ -172,6 +218,7 @@ public class Algorithm {
 			return null;
 		}
 		List<Order> result = new ArrayList<Order>();
+		/*
 		BigDecimal nowAmt = pos.getAmount();
 		int netOpen = ex.getNetopen().compareTo(BigDecimal.ZERO);
 		int netSum = ex.getSumlong().subtract(ex.getSumshort()).compareTo(BigDecimal.ZERO);
@@ -206,6 +253,7 @@ public class Algorithm {
 			}
 		}
 		log.debug(ex.getSymbol()+"("+ ex.getTickNo().toPlainString() +") = result["+result.size()+"] : netSum="+netSum+" netOpen="+netOpen+" netClose="+netClose+" vola="+vola+" nowAmt="+nowAmt);
+		*/
 		return result;
 	}
 	

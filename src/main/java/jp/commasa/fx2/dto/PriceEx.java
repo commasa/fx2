@@ -1,54 +1,66 @@
 package jp.commasa.fx2.dto;
 
-import java.math.BigDecimal;
-
 public class PriceEx extends Price {
 
-	private BigDecimal diff;
-	private BigDecimal diffsp;
-	private BigDecimal sumshort = BigDecimal.ZERO;
-	private BigDecimal sumlong = BigDecimal.ZERO;
-	private BigDecimal netopen;
-	private BigDecimal netclose;
-	
+	private double movAvg1;
+	private double movAvg2;
+	private double alpha1;
+	private double alpha2;
+	private double volatility1;
+	private double volatility2;
+	private String status;
+	private int statusCount;
+
 	public PriceEx(Price p) {
 		super(p);
-	}	
-	public BigDecimal getDiff() {
-		return diff;
 	}
-	public void setDiff(BigDecimal diff) {
-		this.diff = diff;
+	public double getMovAvg1() {
+		return movAvg1;
 	}
-	public BigDecimal getDiffsp() {
-		return diffsp;
+	public void setMovAvg1(double movAvg1) {
+		this.movAvg1 = movAvg1;
 	}
-	public void setDiffsp(BigDecimal diffsp) {
-		this.diffsp = diffsp;
+	public double getMovAvg2() {
+		return movAvg2;
 	}
-	public BigDecimal getSumshort() {
-		return sumshort;
+	public void setMovAvg2(double movAvg2) {
+		this.movAvg2 = movAvg2;
 	}
-	public void setSumshort(BigDecimal sumshort) {
-		this.sumshort = sumshort;
+	public double getAlpha1() {
+		return alpha1;
 	}
-	public BigDecimal getSumlong() {
-		return sumlong;
+	public void setAlpha1(double alpha1) {
+		this.alpha1 = alpha1;
 	}
-	public void setSumlong(BigDecimal sumlong) {
-		this.sumlong = sumlong;
+	public double getAlpha2() {
+		return alpha2;
 	}
-	public BigDecimal getNetopen() {
-		return netopen;
+	public void setAlpha2(double alpha2) {
+		this.alpha2 = alpha2;
 	}
-	public void setNetopen(BigDecimal netopen) {
-		this.netopen = netopen;
+	public double getVolatility1() {
+		return volatility1;
 	}
-	public BigDecimal getNetclose() {
-		return netclose;
+	public void setVolatility1(double volatility1) {
+		this.volatility1 = volatility1;
 	}
-	public void setNetclose(BigDecimal netclose) {
-		this.netclose = netclose;
+	public double getVolatility2() {
+		return volatility2;
 	}
-	
+	public void setVolatility2(double volatility2) {
+		this.volatility2 = volatility2;
+	}
+	public String getStatus() {
+		return status;
+	}
+	public void setStatus(String status) {
+		this.status = status;
+	}
+	public int getStatusCount() {
+		return statusCount;
+	}
+	public void setStatusCount(int statusCount) {
+		this.statusCount = statusCount;
+	}
+
 }

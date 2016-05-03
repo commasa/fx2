@@ -22,47 +22,37 @@ public class Price {
 	public String getSymbol() {
 		return symbol;
 	}
-
 	public void setSymbol(String symbol) {
 		this.symbol = symbol;
 	}
-
 	public double getBid() {
 		return bid;
 	}
-
 	public void setBid(double bid) {
 		this.bid = bid;
 	}
-
 	public double getAsk() {
 		return ask;
 	}
-
 	public void setAsk(double ask) {
 		this.ask = ask;
 	}
-
 	public String getDate() {
 		return date;
 	}
-
 	public void setDate(String date) {
 		this.date = date;
 	}
-
 	public BigDecimal getTickNo() {
 		return tickNo;
 	}
-
 	public void setTickNo(BigDecimal tickNo) {
 		this.tickNo = tickNo;
 	}
-
 	public double getMid() {
 		return (ask + bid) / 2;
 	}
-	
+
 	@Override
 	public String toString() {
 		return "Price [symbol=" + symbol + ", bid=" + bid + ", ask=" + ask 
