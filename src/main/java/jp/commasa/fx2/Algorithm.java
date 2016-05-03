@@ -35,6 +35,9 @@ public class Algorithm {
 	private int movavg1 = 90;
 	private int movavg2 = 30;
 	private int bandwalk = 5;
+	private int alpha1 = 1;
+	private int alpha2 = 2;
+	private int alpha3 = 3;
 	private BigDecimal amount = BigDecimal.valueOf(10000);
 	private BigDecimal volatility = BigDecimal.valueOf(20);
 	private BigDecimal maxamount = BigDecimal.valueOf(30000);
@@ -53,13 +56,23 @@ public class Algorithm {
 			value = this.bundle.getString("movavg2");
 			movavg2 = Integer.valueOf(value);
 		} catch(Exception e) {
-			log.info("Parameter(movavg1,movavg2) is invalid.", e);
+			log.info("Parameter(movavg) is invalid.", e);
 		}
 		try {
 			String value = this.bundle.getString("bandwalk");
 			bandwalk = Integer.valueOf(value);
 		} catch(Exception e) {
 			log.info("Parameter(bandwalk) is invalid.", e);
+		}
+		try {
+			String value = this.bundle.getString("alpha1");
+			alpha1 = Integer.valueOf(value);
+			value = this.bundle.getString("alpha2");
+			alpha2 = Integer.valueOf(value);
+			value = this.bundle.getString("alpha3");
+			alpha3 = Integer.valueOf(value);
+		} catch(Exception e) {
+			log.info("Parameter(movavg) is invalid.", e);
 		}
 		try {
 			String value = this.bundle.getString("amount");
@@ -171,27 +184,27 @@ public class Algorithm {
 			double work = Math.abs(mid - ex.getMovAvg1());
 			ex.setStatus("MA");
 			if ( Math.abs(mid - (ex.getMovAvg1() + ex.getAlpha1())) < work ) {
-				work = Math.abs(mid - (ex.getMovAvg1() + ex.getAlpha1()));
+				work = Math.abs(mid - (ex.getMovAvg1() + alpha1*ex.getAlpha1()));
 				ex.setStatus("+a1");
 			}
 			if ( Math.abs(mid - (ex.getMovAvg1() - ex.getAlpha1())) < work ) {
-				work = Math.abs(mid - (ex.getMovAvg1() - ex.getAlpha1()));
+				work = Math.abs(mid - (ex.getMovAvg1() - alpha1*ex.getAlpha1()));
 				ex.setStatus("-a1");
 			}
 			if ( Math.abs(mid - (ex.getMovAvg1() + 2*ex.getAlpha1())) < work ) {
-				work = Math.abs(mid - (ex.getMovAvg1() + 2*ex.getAlpha1()));
+				work = Math.abs(mid - (ex.getMovAvg1() + alpha2*ex.getAlpha1()));
 				ex.setStatus("+a2");
 			}
 			if ( Math.abs(mid - (ex.getMovAvg1() - 2*ex.getAlpha1())) < work ) {
-				work = Math.abs(mid - (ex.getMovAvg1() - 2*ex.getAlpha1()));
+				work = Math.abs(mid - (ex.getMovAvg1() - alpha2*ex.getAlpha1()));
 				ex.setStatus("-a2");
 			}
 			if ( Math.abs(mid - (ex.getMovAvg1() + 3*ex.getAlpha1())) < work ) {
-				work = Math.abs(mid - (ex.getMovAvg1() + 3*ex.getAlpha1()));
+				work = Math.abs(mid - (ex.getMovAvg1() + alpha3*ex.getAlpha1()));
 				ex.setStatus("+a3");
 			}
 			if ( Math.abs(mid - (ex.getMovAvg1() - 3*ex.getAlpha1())) < work ) {
-				work = Math.abs(mid - (ex.getMovAvg1() - 3*ex.getAlpha1()));
+				work = Math.abs(mid - (ex.getMovAvg1() - alpha3*ex.getAlpha1()));
 				ex.setStatus("-a3");
 			}
 		}
