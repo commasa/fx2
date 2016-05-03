@@ -183,27 +183,27 @@ public class Algorithm {
 			double mid = ex.getMid();
 			double work = Math.abs(mid - ex.getMovAvg1());
 			ex.setStatus("MA");
-			if ( Math.abs(mid - (ex.getMovAvg1() + ex.getAlpha1())) < work ) {
+			if ( Math.abs(mid - (ex.getMovAvg1() + alpha1*ex.getAlpha1())) < work ) {
 				work = Math.abs(mid - (ex.getMovAvg1() + alpha1*ex.getAlpha1()));
 				ex.setStatus("+a1");
 			}
-			if ( Math.abs(mid - (ex.getMovAvg1() - ex.getAlpha1())) < work ) {
+			if ( Math.abs(mid - (ex.getMovAvg1() - alpha1*ex.getAlpha1())) < work ) {
 				work = Math.abs(mid - (ex.getMovAvg1() - alpha1*ex.getAlpha1()));
 				ex.setStatus("-a1");
 			}
-			if ( Math.abs(mid - (ex.getMovAvg1() + 2*ex.getAlpha1())) < work ) {
+			if ( Math.abs(mid - (ex.getMovAvg1() + alpha2*ex.getAlpha1())) < work ) {
 				work = Math.abs(mid - (ex.getMovAvg1() + alpha2*ex.getAlpha1()));
 				ex.setStatus("+a2");
 			}
-			if ( Math.abs(mid - (ex.getMovAvg1() - 2*ex.getAlpha1())) < work ) {
+			if ( Math.abs(mid - (ex.getMovAvg1() - alpha2*ex.getAlpha1())) < work ) {
 				work = Math.abs(mid - (ex.getMovAvg1() - alpha2*ex.getAlpha1()));
 				ex.setStatus("-a2");
 			}
-			if ( Math.abs(mid - (ex.getMovAvg1() + 3*ex.getAlpha1())) < work ) {
+			if ( Math.abs(mid - (ex.getMovAvg1() + alpha3*ex.getAlpha1())) < work ) {
 				work = Math.abs(mid - (ex.getMovAvg1() + alpha3*ex.getAlpha1()));
 				ex.setStatus("+a3");
 			}
-			if ( Math.abs(mid - (ex.getMovAvg1() - 3*ex.getAlpha1())) < work ) {
+			if ( Math.abs(mid - (ex.getMovAvg1() - alpha3*ex.getAlpha1())) < work ) {
 				work = Math.abs(mid - (ex.getMovAvg1() - alpha3*ex.getAlpha1()));
 				ex.setStatus("-a3");
 			}
@@ -239,19 +239,29 @@ public class Algorithm {
 		}
 		List<Order> result = new ArrayList<Order>();
 		BigDecimal nowAmt = pos.getAmount();
-		// TODO 決済
-		// 新規
-		if ( uniq && ex.getVolatility1() >= volatility.doubleValue() ) {
+		int nc = nowAmt.compareTo(BigDecimal.ZERO);
+		if ( nc < 0 && (ex.getStatus().equals("MA") || ex.getStatus().startsWith("+")) ) {
+			// 決済（順張り想定）
+			Order order = new Order(ex.getSymbol(), pos.getAmount().multiply(BigDecimal.valueOf(-1)), ex.getTickNo());
+			result.add(order);
+			pos.orderCount(1);
+		} else if ( nc > 0 && (ex.getStatus().equals("MA") || ex.getStatus().startsWith("-")) ) {
+			// 決済（順張り想定）
+			Order order = new Order(ex.getSymbol(), pos.getAmount().multiply(BigDecimal.valueOf(-1)), ex.getTickNo());
+			result.add(order);
+			pos.orderCount(1);
+		} else if ( uniq && ex.getVolatility1() >= volatility.doubleValue() ) {
+			// 新規
 			if ( ex.getStatusCount() > bandwalk) {
 				// バンドウォーク　順張り
-				if ("+a2".equals(ex.getStatus()) || "+a3".equals(ex.getStatus())) {
+				if ("+a3".equals(ex.getStatus())) {
 					if (nowAmt.compareTo(maxamount) < 0) {
 						Order order = new Order(ex.getSymbol(), amount, ex.getTickNo());
 						result.add(order);
 						pos.orderCount(1);
 					}
 				}
-				if ("-a2".equals(ex.getStatus()) || "-a3".equals(ex.getStatus())) {
+				if ("-a3".equals(ex.getStatus())) {
 					if (nowAmt.compareTo(maxamount.multiply(BigDecimal.valueOf(-1))) > 0) {
 						Order order = new Order(ex.getSymbol(), amount.multiply(BigDecimal.valueOf(-1)), ex.getTickNo());
 						result.add(order);
@@ -260,6 +270,7 @@ public class Algorithm {
 				}
 			} else {
 				// 逆張り
+				/*
 				if ("+a2".equals(ex.getStatus()) || "+a3".equals(ex.getStatus())) {
 					if (nowAmt.compareTo(maxamount.multiply(BigDecimal.valueOf(-1))) > 0) {
 						Order order = new Order(ex.getSymbol(), amount.multiply(BigDecimal.valueOf(-1)), ex.getTickNo());
@@ -274,6 +285,7 @@ public class Algorithm {
 						pos.orderCount(1);
 					}
 				}
+				*/
 			}
 		}
 		BigDecimal mid = null;
