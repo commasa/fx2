@@ -263,7 +263,9 @@ public class Algorithm {
 				}
 			}
 		}
-		log.debug(ex.getSymbol()+"("+ ex.getTickNo().toPlainString() +") = result["+result.size()+"] : status="+ex.getStatus()+" statusCount="+ex.getStatusCount()+" nowAmt="+nowAmt);
+		BigDecimal mid = null;
+		try { mid = BigDecimal.valueOf(ex.getMid()); } catch (Exception e) {}
+		log.debug(ex.getSymbol()+"("+ ex.getTickNo().toPlainString() +") = result["+result.size()+"] : status="+ex.getStatus()+" statusCount="+ex.getStatusCount()+" nowAmt="+nowAmt+" PL="+pos.getPL(mid));
 		return result;
 	}
 	
