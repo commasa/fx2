@@ -42,6 +42,10 @@ public class FIXInitiator {
 		}
 	}
 
+	public FIXInitiator() {
+		log.info("============================================================");
+	}
+	
 	public void loadSetting(InputStream inputStream, ResourceBundle bundle) throws ConfigError  {
 		SessionSettings sessionSettings = new SessionSettings(inputStream);
 		application = new OandaApp(sessionSettings, bundle);

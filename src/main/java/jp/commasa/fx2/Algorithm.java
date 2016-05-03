@@ -32,8 +32,9 @@ public class Algorithm {
 	private Map<String, List<PriceEx>> history = new HashMap<String, List<PriceEx>>();
 	private Map<String, Position> position = new HashMap<String, Position>();
 	private int size = 100;
-	private int movavg1 = 45;
-	private int movavg2 = 15;
+	private int movavg1 = 90;
+	private int movavg2 = 30;
+	private int bandwalk = 5;
 	private BigDecimal amount = BigDecimal.valueOf(10000);
 	private BigDecimal volatility = BigDecimal.valueOf(20);
 	private BigDecimal maxamount = BigDecimal.valueOf(30000);
@@ -53,6 +54,12 @@ public class Algorithm {
 			movavg2 = Integer.valueOf(value);
 		} catch(Exception e) {
 			log.info("Parameter(movavg1,movavg2) is invalid.", e);
+		}
+		try {
+			String value = this.bundle.getString("bandwalk");
+			bandwalk = Integer.valueOf(value);
+		} catch(Exception e) {
+			log.info("Parameter(bandwalk) is invalid.", e);
 		}
 		try {
 			String value = this.bundle.getString("amount");
@@ -101,7 +108,7 @@ public class Algorithm {
 		}
 		double scale = 10000;
 		if (ex.getSymbol().endsWith("JPY")) scale=100;
-		//ボリジャーバンドもどき
+		//ボリンジャーバンドもどき
 		int ma1len = movavg1;
 		double v1 = 0;
 		if (previous.size() > movavg1) {
@@ -218,42 +225,45 @@ public class Algorithm {
 			return null;
 		}
 		List<Order> result = new ArrayList<Order>();
-		/*
 		BigDecimal nowAmt = pos.getAmount();
-		int netOpen = ex.getNetopen().compareTo(BigDecimal.ZERO);
-		int netSum = ex.getSumlong().subtract(ex.getSumshort()).compareTo(BigDecimal.ZERO);
-		int netClose = ex.getNetclose().compareTo(BigDecimal.ZERO);
-		BigDecimal vola = ex.getSumlong().add(ex.getSumshort());
-		if (uniq) {
-			if ( nowAmt.compareTo(BigDecimal.ZERO) < 0 && netClose > 0 ) {
-				// 決済
-				Order order = new Order(ex.getSymbol(), amount, ex.getTickNo());
-				result.add(order);
-				pos.orderCount(1);
-			} else {
-				if (netSum > 0 && netOpen > 0 && netClose > 0 && vola.compareTo(volatility) >= 0 && nowAmt.abs().compareTo(maxamount) < 0) {
-					// 新規
-					Order order = new Order(ex.getSymbol(), amount, ex.getTickNo());
-					result.add(order);
-					pos.orderCount(1);
+		// TODO 決済
+		// 新規
+		if ( uniq && ex.getVolatility1() >= volatility.doubleValue() ) {
+			if ( ex.getStatusCount() > bandwalk) {
+				// バンドウォーク　順張り
+				if ("+a2".equals(ex.getStatus()) || "+a3".equals(ex.getStatus())) {
+					if (nowAmt.compareTo(maxamount) < 0) {
+						Order order = new Order(ex.getSymbol(), amount, ex.getTickNo());
+						result.add(order);
+						pos.orderCount(1);
+					}
 				}
-			}
-			if ( nowAmt.compareTo(BigDecimal.ZERO) > 0 && netClose < 0 ) {
-				// 決済
-				Order order = new Order(ex.getSymbol(), amount.multiply(BigDecimal.valueOf(-1)), ex.getTickNo());
-				result.add(order);
-				pos.orderCount(1);
+				if ("-a2".equals(ex.getStatus()) || "-a3".equals(ex.getStatus())) {
+					if (nowAmt.compareTo(maxamount.multiply(BigDecimal.valueOf(-1))) > 0) {
+						Order order = new Order(ex.getSymbol(), amount.multiply(BigDecimal.valueOf(-1)), ex.getTickNo());
+						result.add(order);
+						pos.orderCount(1);
+					}
+				}
 			} else {
-				if (netSum < 0 && netOpen < 0 && netClose < 0 && vola.compareTo(volatility) >= 0 && nowAmt.abs().compareTo(maxamount) < 0) {
-					// 新規
-					Order order = new Order(ex.getSymbol(), amount.multiply(BigDecimal.valueOf(-1)), ex.getTickNo());
-					result.add(order);
-					pos.orderCount(1);
+				// 逆張り
+				if ("+a2".equals(ex.getStatus()) || "+a3".equals(ex.getStatus())) {
+					if (nowAmt.compareTo(maxamount.multiply(BigDecimal.valueOf(-1))) > 0) {
+						Order order = new Order(ex.getSymbol(), amount.multiply(BigDecimal.valueOf(-1)), ex.getTickNo());
+						result.add(order);
+						pos.orderCount(1);
+					}
+				}
+				if ("-a2".equals(ex.getStatus()) || "-a3".equals(ex.getStatus())) {
+					if (nowAmt.compareTo(maxamount) < 0) {
+						Order order = new Order(ex.getSymbol(), amount, ex.getTickNo());
+						result.add(order);
+						pos.orderCount(1);
+					}
 				}
 			}
 		}
-		log.debug(ex.getSymbol()+"("+ ex.getTickNo().toPlainString() +") = result["+result.size()+"] : netSum="+netSum+" netOpen="+netOpen+" netClose="+netClose+" vola="+vola+" nowAmt="+nowAmt);
-		*/
+		log.debug(ex.getSymbol()+"("+ ex.getTickNo().toPlainString() +") = result["+result.size()+"] : status="+ex.getStatus()+" statusCount="+ex.getStatusCount()+" nowAmt="+nowAmt);
 		return result;
 	}
 	

@@ -269,7 +269,7 @@ public class OandaApp extends MessageCracker implements Application {
 			// tickNo が変更された時のみする
 			if (t==null || entry.getValue().getTickNo()==null || !t.equals(entry.getValue().getTickNo())) {
 				List<Order> orderList = algorithm.run(entry.getValue());
-/*				if (orderList != null) {
+				if (orderList != null) {
 					for (Order order : orderList) {
 						try {
 							newOrder(order);
@@ -278,7 +278,7 @@ public class OandaApp extends MessageCracker implements Application {
 						}
 					}
 				}
-*/				tickNo.put(entry.getKey(), entry.getValue().getTickNo());
+				tickNo.put(entry.getKey(), entry.getValue().getTickNo());
 			}
 		}
 	}
