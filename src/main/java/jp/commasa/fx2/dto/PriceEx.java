@@ -8,7 +8,8 @@ public class PriceEx extends Price {
 	private BigDecimal diffsp;
 	private BigDecimal sumshort = BigDecimal.ZERO;
 	private BigDecimal sumlong = BigDecimal.ZERO;
-	private BigDecimal net;
+	private BigDecimal netopen;
+	private BigDecimal netclose;
 	
 	public PriceEx(Price p) {
 		super(p);
@@ -37,11 +38,17 @@ public class PriceEx extends Price {
 	public void setSumlong(BigDecimal sumlong) {
 		this.sumlong = sumlong;
 	}
-	public BigDecimal getNet() {
-		return net;
+	public BigDecimal getNetopen() {
+		return netopen;
 	}
-	public void setNet(BigDecimal net) {
-		this.net = net;
+	public void setNetopen(BigDecimal netopen) {
+		this.netopen = netopen;
+	}
+	public BigDecimal getNetclose() {
+		return netclose;
+	}
+	public void setNetclose(BigDecimal netclose) {
+		this.netclose = netclose;
 	}
 	
 }

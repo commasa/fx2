@@ -59,7 +59,7 @@ public class FIXInitiator {
 
 	public void stop() {
 		application.close();
-		log.info("stop : OK");
 		initiator.stop();
+		log.info("stop : OK");
 	}
 }

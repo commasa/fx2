@@ -441,6 +441,9 @@ public class OandaApp extends MessageCracker implements Application {
 	}
 
 	public void close () {
+		log.info("application closing...");
+		algorithm.finish();
+		/* タイミングによってうまくいかないことがあるので一旦保留
 		List<Order> orderList = algorithm.finish();
 		if (orderList != null) {
 			for (Order order : orderList) {
@@ -456,6 +459,7 @@ public class OandaApp extends MessageCracker implements Application {
 			Thread.sleep(5000);
 		} catch (InterruptedException e) {
 		}
+		*/
 	}
 
 }

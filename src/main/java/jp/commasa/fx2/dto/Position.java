@@ -15,6 +15,8 @@ public class Position {
 	private BigDecimal amount = BigDecimal.ZERO;
 	private List<Trans> reports = new ArrayList<Trans>();
 	private int orderCount = 0;
+	private BigDecimal changeamount = BigDecimal.ZERO;
+	private BigDecimal totalamount = BigDecimal.ZERO;
 	
 	public BigDecimal getCost() {
 		return cost;
@@ -95,11 +97,23 @@ public class Position {
 			}
 			log.trace(" <<< this.amount="+amount+" this.cost="+cost);
 		}
+		if (report.getSide().equals("1")) this.changeamount = this.changeamount.add(report.getCumQty().multiply(report.getAvgPx()));
+		if (report.getSide().equals("2")) this.changeamount = this.changeamount.subtract(report.getCumQty().multiply(report.getAvgPx()));
+		this.totalamount = this.totalamount.add(report.getCumQty());
 	} 
+
+	public String getPL(BigDecimal p) {
+		if (p==null) return "price is invalid.";
+		BigDecimal pl = this.amount.multiply(p).subtract(this.changeamount);
+		BigDecimal unit = pl.divide(this.totalamount, 4, BigDecimal.ROUND_HALF_UP);
+		return "PL = " + pl.toPlainString() + " UNIT = " + unit.toPlainString();
+	}
 
 	public void reset() {
 		this.cost = BigDecimal.ZERO;
 		this.amount = BigDecimal.ZERO;
+		this.changeamount = BigDecimal.ZERO;
+		this.totalamount = BigDecimal.ZERO;
 		this.reports.clear();
 	}
 

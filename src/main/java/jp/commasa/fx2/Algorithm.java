@@ -32,7 +32,8 @@ public class Algorithm {
 	private Map<String, List<PriceEx>> history = new HashMap<String, List<PriceEx>>();
 	private Map<String, Position> position = new HashMap<String, Position>();
 	private int size = 100;
-	private int net = 5;
+	private int netopen = 5;
+	private int netclose = 10;
 	private BigDecimal amount = BigDecimal.valueOf(10000);
 	private BigDecimal volatility = BigDecimal.valueOf(20);
 	private BigDecimal maxamount = BigDecimal.valueOf(30000);
@@ -46,8 +47,10 @@ public class Algorithm {
 			log.info("Parameter(size) is invalid.", e);
 		}
 		try {
-			String value = this.bundle.getString("net");
-			net = Integer.valueOf(value);
+			String value = this.bundle.getString("netopen");
+			netopen = Integer.valueOf(value);
+			value = this.bundle.getString("netclose");
+			netclose = Integer.valueOf(value);
 		} catch(Exception e) {
 			log.info("Parameter(net) is invalid.", e);
 		}
@@ -131,15 +134,25 @@ public class Algorithm {
 			if (c < 0) ex.setSumshort(ex.getSumshort().subtract(d.getDiff().abs()));			
 			previous.remove(0);
 		}
-		if (previous.size() > net) {
-			int s = previous.size() - net;
+		if (previous.size() > netopen) {
+			int s = previous.size() - netopen;
 			BigDecimal n = BigDecimal.ZERO;
 			for (int i=s; i<previous.size(); i++) {
 				n = n.add(previous.get(i).getDiff());
 			}
-			ex.setNet(n);
+			ex.setNetopen(n);
 		} else {
-			ex.setNet(BigDecimal.ZERO);
+			ex.setNetopen(BigDecimal.ZERO);
+		}
+		if (previous.size() > netclose) {
+			int s = previous.size() - netclose;
+			BigDecimal n = BigDecimal.ZERO;
+			for (int i=s; i<previous.size(); i++) {
+				n = n.add(previous.get(i).getDiff());
+			}
+			ex.setNetclose(n);
+		} else {
+			ex.setNetclose(BigDecimal.ZERO);
 		}
 		String key = p.getSymbol();
 		String val = gson.toJson(ex);
@@ -160,30 +173,31 @@ public class Algorithm {
 		}
 		List<Order> result = new ArrayList<Order>();
 		BigDecimal nowAmt = pos.getAmount();
-		int netC1 = ex.getNet().compareTo(BigDecimal.ZERO);
-		int netC2 = ex.getSumlong().subtract(ex.getSumshort()).compareTo(BigDecimal.ZERO);
+		int netOpen = ex.getNetopen().compareTo(BigDecimal.ZERO);
+		int netSum = ex.getSumlong().subtract(ex.getSumshort()).compareTo(BigDecimal.ZERO);
+		int netClose = ex.getNetclose().compareTo(BigDecimal.ZERO);
 		BigDecimal vola = ex.getSumlong().add(ex.getSumshort());
 		if (uniq) {
-			if ( nowAmt.compareTo(BigDecimal.ZERO) < 0 && netC1 > 0 ) {
+			if ( nowAmt.compareTo(BigDecimal.ZERO) < 0 && netClose > 0 ) {
 				// 決済
 				Order order = new Order(ex.getSymbol(), amount, ex.getTickNo());
 				result.add(order);
 				pos.orderCount(1);
 			} else {
-				if (netC1 > 0 && netC2 > 0 && vola.compareTo(volatility) >= 0 && nowAmt.abs().compareTo(maxamount) < 0) {
+				if (netSum > 0 && netOpen > 0 && netClose > 0 && vola.compareTo(volatility) >= 0 && nowAmt.abs().compareTo(maxamount) < 0) {
 					// 新規
 					Order order = new Order(ex.getSymbol(), amount, ex.getTickNo());
 					result.add(order);
 					pos.orderCount(1);
 				}
 			}
-			if ( nowAmt.compareTo(BigDecimal.ZERO) > 0 && netC1 < 0 ) {
+			if ( nowAmt.compareTo(BigDecimal.ZERO) > 0 && netClose < 0 ) {
 				// 決済
 				Order order = new Order(ex.getSymbol(), amount.multiply(BigDecimal.valueOf(-1)), ex.getTickNo());
 				result.add(order);
 				pos.orderCount(1);
 			} else {
-				if (netC1 < 0 && netC2 < 0 && vola.compareTo(volatility) >= 0 && nowAmt.abs().compareTo(maxamount) < 0) {
+				if (netSum < 0 && netOpen < 0 && netClose < 0 && vola.compareTo(volatility) >= 0 && nowAmt.abs().compareTo(maxamount) < 0) {
 					// 新規
 					Order order = new Order(ex.getSymbol(), amount.multiply(BigDecimal.valueOf(-1)), ex.getTickNo());
 					result.add(order);
@@ -191,7 +205,7 @@ public class Algorithm {
 				}
 			}
 		}
-		log.debug(ex.getSymbol()+"("+ ex.getTickNo().toPlainString() +") = result["+result.size()+"] : netC1="+netC1+" netC2="+netC2+" vola="+vola+" nowAmt="+nowAmt);
+		log.debug(ex.getSymbol()+"("+ ex.getTickNo().toPlainString() +") = result["+result.size()+"] : netSum="+netSum+" netOpen="+netOpen+" netClose="+netClose+" vola="+vola+" nowAmt="+nowAmt);
 		return result;
 	}
 	
@@ -216,6 +230,7 @@ public class Algorithm {
 		}
 		*/
 		pos.orderCount(-1);
+		log.info(pos.getPL(report.getAvgPx()));
 	}
 
 	public List<Order> finish() {
