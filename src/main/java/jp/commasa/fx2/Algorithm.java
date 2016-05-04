@@ -181,31 +181,24 @@ public class Algorithm {
 			ex.setStatus("");
 		} else {
 			double mid = ex.getMid();
-			double work = Math.abs(mid - ex.getMovAvg1());
 			ex.setStatus("MA");
-			if ( Math.abs(mid - (ex.getMovAvg1() + alpha1*ex.getAlpha1())) < work ) {
-				work = Math.abs(mid - (ex.getMovAvg1() + alpha1*ex.getAlpha1()));
+			if ( mid > (ex.getMovAvg1() + alpha1*ex.getAlpha1()) ) {
 				ex.setStatus("+a1");
+				if ( mid > (ex.getMovAvg1() + alpha2*ex.getAlpha1()) ) {
+					ex.setStatus("+a2");
+					if ( mid > (ex.getMovAvg1() + alpha3*ex.getAlpha1()) ) {
+						ex.setStatus("+a3");
+					}
+				}
 			}
-			if ( Math.abs(mid - (ex.getMovAvg1() - alpha1*ex.getAlpha1())) < work ) {
-				work = Math.abs(mid - (ex.getMovAvg1() - alpha1*ex.getAlpha1()));
+			if ( mid < (ex.getMovAvg1() - alpha1*ex.getAlpha1()) ) {
 				ex.setStatus("-a1");
-			}
-			if ( Math.abs(mid - (ex.getMovAvg1() + alpha2*ex.getAlpha1())) < work ) {
-				work = Math.abs(mid - (ex.getMovAvg1() + alpha2*ex.getAlpha1()));
-				ex.setStatus("+a2");
-			}
-			if ( Math.abs(mid - (ex.getMovAvg1() - alpha2*ex.getAlpha1())) < work ) {
-				work = Math.abs(mid - (ex.getMovAvg1() - alpha2*ex.getAlpha1()));
-				ex.setStatus("-a2");
-			}
-			if ( Math.abs(mid - (ex.getMovAvg1() + alpha3*ex.getAlpha1())) < work ) {
-				work = Math.abs(mid - (ex.getMovAvg1() + alpha3*ex.getAlpha1()));
-				ex.setStatus("+a3");
-			}
-			if ( Math.abs(mid - (ex.getMovAvg1() - alpha3*ex.getAlpha1())) < work ) {
-				work = Math.abs(mid - (ex.getMovAvg1() - alpha3*ex.getAlpha1()));
-				ex.setStatus("-a3");
+				if ( mid < (ex.getMovAvg1() - alpha2*ex.getAlpha1()) ) {
+					ex.setStatus("-a2");
+					if ( mid < (ex.getMovAvg1() - alpha3*ex.getAlpha1()) ) {
+						ex.setStatus("-a3");
+					}
+				}
 			}
 		}
 		int cnt = 0;
