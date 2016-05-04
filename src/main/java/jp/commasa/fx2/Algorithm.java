@@ -130,10 +130,10 @@ public class Algorithm {
 			for (int i=st; i<previous.size(); i++) {
 				if (previous.get(i).getAsk() > 0 && previous.get(i).getBid() > 0) {
 					sum += previous.get(i).getMid();
+					if (i > 0) v1 += Math.abs(previous.get(i).getMid()-previous.get(i-1).getMid());
 				} else {
 					ma1len--;
 				}
-				if (i > 0) v1 += Math.abs(previous.get(i).getMid()-previous.get(i-1).getMid());
 			}
 			if (ma1len>0) { ex.setMovAvg1(sum/ma1len); } else { ex.setMovAvg1(0D); }
 			ex.setVolatility1(v1*scale);
@@ -157,10 +157,10 @@ public class Algorithm {
 			for (int i=st; i<previous.size(); i++) {
 				if (previous.get(i).getAsk() > 0 && previous.get(i).getBid() > 0) {
 					sum += previous.get(i).getMid();
+					if (i > 0) v2 += Math.abs(previous.get(i).getMid()-previous.get(i-1).getMid());
 				} else {
 					ma2len--;
 				}
-				if (i > 0) v2 += Math.abs(previous.get(i).getMid()-previous.get(i-1).getMid());
 			}
 			if (ma2len>0) { ex.setMovAvg2(sum/ma2len); } else { ex.setMovAvg2(0D); }
 			ex.setVolatility2(v2*scale);
