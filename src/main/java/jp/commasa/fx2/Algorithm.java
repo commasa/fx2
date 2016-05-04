@@ -233,12 +233,12 @@ public class Algorithm {
 		List<Order> result = new ArrayList<Order>();
 		BigDecimal nowAmt = pos.getAmount();
 		int nc = nowAmt.compareTo(BigDecimal.ZERO);
-		if ( nc < 0 && !ex.getStatus().equals("-a2") && !ex.getStatus().equals("-a3") ) {
+		if ( nc < 0 && !ex.getStatus().startsWith("-") ) {
 			// 決済（順張り想定）
 			Order order = new Order(ex.getSymbol(), pos.getAmount().multiply(BigDecimal.valueOf(-1)), ex.getTickNo());
 			result.add(order);
 			pos.orderCount(1);
-		} else if ( nc > 0 && !ex.getStatus().equals("+a2") && !ex.getStatus().equals("+a3") ) {
+		} else if ( nc > 0 && !ex.getStatus().startsWith("+") ) {
 			// 決済（順張り想定）
 			Order order = new Order(ex.getSymbol(), pos.getAmount().multiply(BigDecimal.valueOf(-1)), ex.getTickNo());
 			result.add(order);
