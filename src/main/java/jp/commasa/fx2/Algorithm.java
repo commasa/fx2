@@ -240,12 +240,12 @@ public class Algorithm {
 		List<Order> result = new ArrayList<Order>();
 		BigDecimal nowAmt = pos.getAmount();
 		int nc = nowAmt.compareTo(BigDecimal.ZERO);
-		if ( nc < 0 && (ex.getStatus().equals("MA") || ex.getStatus().startsWith("+")) ) {
+		if ( nc < 0 && !ex.getStatus().equals("-a2") && !ex.getStatus().equals("-a3") ) {
 			// 決済（順張り想定）
 			Order order = new Order(ex.getSymbol(), pos.getAmount().multiply(BigDecimal.valueOf(-1)), ex.getTickNo());
 			result.add(order);
 			pos.orderCount(1);
-		} else if ( nc > 0 && (ex.getStatus().equals("MA") || ex.getStatus().startsWith("-")) ) {
+		} else if ( nc > 0 && !ex.getStatus().equals("+a2") && !ex.getStatus().equals("+a3") ) {
 			// 決済（順張り想定）
 			Order order = new Order(ex.getSymbol(), pos.getAmount().multiply(BigDecimal.valueOf(-1)), ex.getTickNo());
 			result.add(order);
@@ -254,14 +254,15 @@ public class Algorithm {
 			// 新規
 			if ( ex.getStatusCount() > bandwalk) {
 				// バンドウォーク　順張り
-				if ("+a3".equals(ex.getStatus())) {
+				if ("+a2".equals(ex.getStatus())) {
 					if (nowAmt.compareTo(maxamount) < 0) {
 						Order order = new Order(ex.getSymbol(), amount, ex.getTickNo());
 						result.add(order);
 						pos.orderCount(1);
 					}
 				}
-				if ("-a3".equals(ex.getStatus())) {
+				// バンドウォーク　順張り
+				if ("-a2".equals(ex.getStatus())) {
 					if (nowAmt.compareTo(maxamount.multiply(BigDecimal.valueOf(-1))) > 0) {
 						Order order = new Order(ex.getSymbol(), amount.multiply(BigDecimal.valueOf(-1)), ex.getTickNo());
 						result.add(order);
@@ -269,6 +270,22 @@ public class Algorithm {
 					}
 				}
 			} else {
+				// 跳ね　順張り
+				if ("+a3".equals(ex.getStatus())) {
+					if (nowAmt.compareTo(maxamount) < 0) {
+						Order order = new Order(ex.getSymbol(), amount, ex.getTickNo());
+						result.add(order);
+						pos.orderCount(1);
+					}
+				}
+				// 跳ね　順張り
+				if ("-a3".equals(ex.getStatus())) {
+					if (nowAmt.compareTo(maxamount.multiply(BigDecimal.valueOf(-1))) > 0) {
+						Order order = new Order(ex.getSymbol(), amount.multiply(BigDecimal.valueOf(-1)), ex.getTickNo());
+						result.add(order);
+						pos.orderCount(1);
+					}
+				}
 				// 逆張り
 				/*
 				if ("+a2".equals(ex.getStatus()) || "+a3".equals(ex.getStatus())) {
