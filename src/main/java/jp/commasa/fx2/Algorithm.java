@@ -252,7 +252,7 @@ public class Algorithm {
 			pos.orderCount(1);
 		} else if ( uniq && ex.getVolatility1() >= volatility.doubleValue() ) {
 			// 新規
-			if ( ex.getStatusCount() > bandwalk) {
+			if ( ex.getStatusCount() >= bandwalk) {
 				// バンドウォーク　順張り
 				if ("+a2".equals(ex.getStatus())) {
 					if (nowAmt.compareTo(maxamount) < 0) {
