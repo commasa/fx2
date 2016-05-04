@@ -178,39 +178,70 @@ public class Algorithm {
 		}
 		// status
 		if (ex.getMovAvg1() < 1) {
-			ex.setStatus("");
+			ex.setStatus1("");
+			ex.setStatus2("");
 		} else {
 			double mid = ex.getMid();
-			ex.setStatus("MA");
+			ex.setStatus1("MA");
 			if ( mid > (ex.getMovAvg1() + alpha1*ex.getAlpha1()) ) {
-				ex.setStatus("+a1");
+				ex.setStatus1("+a1");
 				if ( mid > (ex.getMovAvg1() + alpha2*ex.getAlpha1()) ) {
-					ex.setStatus("+a2");
+					ex.setStatus1("+a2");
 					if ( mid > (ex.getMovAvg1() + alpha3*ex.getAlpha1()) ) {
-						ex.setStatus("+a3");
+						ex.setStatus1("+a3");
 					}
 				}
 			}
 			if ( mid < (ex.getMovAvg1() - alpha1*ex.getAlpha1()) ) {
-				ex.setStatus("-a1");
+				ex.setStatus1("-a1");
 				if ( mid < (ex.getMovAvg1() - alpha2*ex.getAlpha1()) ) {
-					ex.setStatus("-a2");
+					ex.setStatus1("-a2");
 					if ( mid < (ex.getMovAvg1() - alpha3*ex.getAlpha1()) ) {
-						ex.setStatus("-a3");
+						ex.setStatus1("-a3");
+					}
+				}
+			}
+			ex.setStatus2("MA");
+			if ( mid > (ex.getMovAvg2() + alpha1*ex.getAlpha2()) ) {
+				ex.setStatus2("+a1");
+				if ( mid > (ex.getMovAvg2() + alpha2*ex.getAlpha2()) ) {
+					ex.setStatus2("+a2");
+					if ( mid > (ex.getMovAvg2() + alpha3*ex.getAlpha2()) ) {
+						ex.setStatus2("+a3");
+					}
+				}
+			}
+			if ( mid < (ex.getMovAvg2() - alpha1*ex.getAlpha2()) ) {
+				ex.setStatus2("-a1");
+				if ( mid < (ex.getMovAvg2() - alpha2*ex.getAlpha2()) ) {
+					ex.setStatus2("-a2");
+					if ( mid < (ex.getMovAvg2() - alpha3*ex.getAlpha2()) ) {
+						ex.setStatus2("-a3");
 					}
 				}
 			}
 		}
-		int cnt = 0;
-		String status = ex.getStatus();
+		int cnt1 = 0;
+		int cnt2 = 0;
+		boolean isBreak1 = false;
+		boolean isBreak2 = false;
+		String status1 = ex.getStatus1();
+		String status2 = ex.getStatus2();
 		for (int i=previous.size()-1; i>=0; i--) {
-			if ( status.equals(previous.get(i).getStatus()) ) {
-				cnt++;
+			if ( status1.equals(previous.get(i).getStatus1()) ) {
+				cnt1++;
 			} else {
-				break;
+				isBreak1 = true;
 			}
+			if ( status2.equals(previous.get(i).getStatus2()) ) {
+				cnt2++;
+			} else {
+				isBreak2 = true;
+			}
+			if ( isBreak1 && isBreak2 ) break;
 		}
-		ex.setStatusCount(cnt);
+		ex.setStatusCount1(cnt1);
+		ex.setStatusCount2(cnt2);
 
 		// 書き込み
 		String key = p.getSymbol();
@@ -233,29 +264,29 @@ public class Algorithm {
 		List<Order> result = new ArrayList<Order>();
 		BigDecimal nowAmt = pos.getAmount();
 		int nc = nowAmt.compareTo(BigDecimal.ZERO);
-		if ( nc < 0 && !ex.getStatus().startsWith("-") ) {
+		if ( nc < 0 && !ex.getStatus1().startsWith("-") ) {
 			// 決済（順張り想定）
 			Order order = new Order(ex.getSymbol(), pos.getAmount().multiply(BigDecimal.valueOf(-1)), ex.getTickNo());
 			result.add(order);
 			pos.orderCount(1);
-		} else if ( nc > 0 && !ex.getStatus().startsWith("+") ) {
+		} else if ( nc > 0 && !ex.getStatus1().startsWith("+") ) {
 			// 決済（順張り想定）
 			Order order = new Order(ex.getSymbol(), pos.getAmount().multiply(BigDecimal.valueOf(-1)), ex.getTickNo());
 			result.add(order);
 			pos.orderCount(1);
 		} else if ( uniq && ex.getVolatility1() >= volatility.doubleValue() ) {
 			// 新規
-			if ( ex.getStatusCount() >= bandwalk) {
-				// バンドウォーク　順張り
-				if ("+a2".equals(ex.getStatus())) {
+			if ( ex.getStatusCount1() >= bandwalk && ex.getStatusCount2() >= bandwalk ) {
+				// バンドウォーク順張り or 逆張り
+				if ( ("+a2".equals(ex.getStatus1()) && ex.getStatus2().startsWith("+")) || ("-a2".equals(ex.getStatus1()) && ex.getStatus2().startsWith("+")) ) {
 					if (nowAmt.compareTo(maxamount) < 0) {
 						Order order = new Order(ex.getSymbol(), amount, ex.getTickNo());
 						result.add(order);
 						pos.orderCount(1);
 					}
 				}
-				// バンドウォーク　順張り
-				if ("-a2".equals(ex.getStatus())) {
+				// バンドウォーク順張り or 逆張り
+				if ( ("-a2".equals(ex.getStatus1()) && ex.getStatus2().startsWith("-")) || ("+a2".equals(ex.getStatus1()) && ex.getStatus2().startsWith("-")) ) {
 					if (nowAmt.compareTo(maxamount.multiply(BigDecimal.valueOf(-1))) > 0) {
 						Order order = new Order(ex.getSymbol(), amount.multiply(BigDecimal.valueOf(-1)), ex.getTickNo());
 						result.add(order);
@@ -264,7 +295,7 @@ public class Algorithm {
 				}
 			} else {
 				// 跳ね　順張り
-				if ("+a3".equals(ex.getStatus())) {
+				if ("+a3".equals(ex.getStatus1())) {
 					if (nowAmt.compareTo(maxamount) < 0) {
 						Order order = new Order(ex.getSymbol(), amount, ex.getTickNo());
 						result.add(order);
@@ -272,35 +303,18 @@ public class Algorithm {
 					}
 				}
 				// 跳ね　順張り
-				if ("-a3".equals(ex.getStatus())) {
+				if ("-a3".equals(ex.getStatus1())) {
 					if (nowAmt.compareTo(maxamount.multiply(BigDecimal.valueOf(-1))) > 0) {
 						Order order = new Order(ex.getSymbol(), amount.multiply(BigDecimal.valueOf(-1)), ex.getTickNo());
 						result.add(order);
 						pos.orderCount(1);
 					}
 				}
-				// 逆張り
-				/*
-				if ("+a2".equals(ex.getStatus()) || "+a3".equals(ex.getStatus())) {
-					if (nowAmt.compareTo(maxamount.multiply(BigDecimal.valueOf(-1))) > 0) {
-						Order order = new Order(ex.getSymbol(), amount.multiply(BigDecimal.valueOf(-1)), ex.getTickNo());
-						result.add(order);
-						pos.orderCount(1);
-					}
-				}
-				if ("-a2".equals(ex.getStatus()) || "-a3".equals(ex.getStatus())) {
-					if (nowAmt.compareTo(maxamount) < 0) {
-						Order order = new Order(ex.getSymbol(), amount, ex.getTickNo());
-						result.add(order);
-						pos.orderCount(1);
-					}
-				}
-				*/
 			}
 		}
 		BigDecimal mid = null;
 		try { mid = BigDecimal.valueOf(ex.getMid()); } catch (Exception e) {}
-		log.debug(ex.getSymbol()+"("+ ex.getTickNo().toPlainString() +") = result["+result.size()+"] : status="+ex.getStatus()+" statusCount="+ex.getStatusCount()+" nowAmt="+nowAmt+" "+pos.getPL(mid));
+		log.debug(ex.getSymbol()+"("+ ex.getTickNo().toPlainString() +") = result["+result.size()+"] : status1="+ex.getStatus1()+" statusCount1="+ex.getStatusCount1()+" status2="+ex.getStatus2()+" statusCount2="+ex.getStatusCount2()+" nowAmt="+nowAmt+" "+pos.getPL(mid));
 		return result;
 	}
 	
