@@ -307,19 +307,8 @@ public class Algorithm {
 				pos.orderCount(1);
 				optmsg = " <CLOSE loss>";
 			}
-		/*
-		if ( nc < 0 && ex.getStatus1().startsWith("+") ) {
-			// 決済（順張り想定）
-			Order order = new Order(ex.getSymbol(), pos.getAmount().multiply(BigDecimal.valueOf(-1)), ex.getTickNo());
-			result.add(order);
-			pos.orderCount(1);
-		} else if ( nc > 0 && ex.getStatus1().startsWith("-") ) {
-			// 決済（順張り想定）
-			Order order = new Order(ex.getSymbol(), pos.getAmount().multiply(BigDecimal.valueOf(-1)), ex.getTickNo());
-			result.add(order);
-			pos.orderCount(1);
-		*/
-		} else if ( uniq && ex.getVolatility1() >= volatility.doubleValue() ) {
+		}
+		if ( uniq && "".equals(optmsg) && ex.getVolatility1() >= volatility.doubleValue() ) {
 			// 新規
 			if ( ex.getStatusCount1() >= bandwalk /* && ex.getStatusCount2() >= bandwalk */ ) {
 				// バンドウォーク順張り or 逆張り
