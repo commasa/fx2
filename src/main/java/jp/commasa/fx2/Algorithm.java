@@ -41,6 +41,8 @@ public class Algorithm {
 	private BigDecimal amount = BigDecimal.valueOf(10000);
 	private BigDecimal volatility = BigDecimal.valueOf(20);
 	private BigDecimal maxamount = BigDecimal.valueOf(30000);
+	private double profit = 0.001;
+	private double loss = 0.0005;
 
 	public Algorithm(ResourceBundle bundle) {
 		this.bundle = bundle;
@@ -91,6 +93,14 @@ public class Algorithm {
 			volatility = new BigDecimal(value);
 		} catch(Exception e) {
 			log.info("Parameter(volatility) is invalid.", e);
+		}
+		try {
+			String value = this.bundle.getString("profit");
+			profit = Double.valueOf(value) / 100;
+			value = this.bundle.getString("loss");
+			loss = Double.valueOf(value) / 100;
+		} catch(Exception e) {
+			log.info("Parameter(profit/loss) is invalid.", e);
 		}
 	}
 	
@@ -179,7 +189,6 @@ public class Algorithm {
 		// status
 		if (ex.getMovAvg1() < 1) {
 			ex.setStatus1("");
-			ex.setStatus2("");
 		} else {
 			double mid = ex.getMid();
 			ex.setStatus1("MA");
@@ -201,6 +210,11 @@ public class Algorithm {
 					}
 				}
 			}
+		}
+		if (ex.getMovAvg2() < 1) {
+			ex.setStatus2("");
+		} else {
+			double mid = ex.getMid();
 			ex.setStatus2("MA");
 			if ( mid > (ex.getMovAvg2() + alpha1*ex.getAlpha2()) ) {
 				ex.setStatus2("+a1");
@@ -264,25 +278,57 @@ public class Algorithm {
 		List<Order> result = new ArrayList<Order>();
 		BigDecimal nowAmt = pos.getAmount();
 		int nc = nowAmt.compareTo(BigDecimal.ZERO);
-		if ( nc < 0 && !ex.getStatus1().startsWith("-") ) {
+		String optmsg = "";
+		if ( nc < 0 ) {
+			if ( pos.getCost().doubleValue()*(1+loss) < ex.getMid() ) {
+				// 決済（利確）
+				Order order = new Order(ex.getSymbol(), pos.getAmount().multiply(BigDecimal.valueOf(-1)), ex.getTickNo());
+				result.add(order);
+				pos.orderCount(1);
+				optmsg = " <CLOSE profit>";
+			} else if ( pos.getCost().doubleValue()*(1-profit) > ex.getMid() ) {
+				// 決済（損切）
+				Order order = new Order(ex.getSymbol(), pos.getAmount().multiply(BigDecimal.valueOf(-1)), ex.getTickNo());
+				result.add(order);
+				pos.orderCount(1);
+				optmsg = " <CLOSE loss>";
+			}
+		} else if ( nc > 0 ) {
+			if ( pos.getCost().doubleValue()*(1+profit) < ex.getMid() ) {
+				// 決済（利確）
+				Order order = new Order(ex.getSymbol(), pos.getAmount().multiply(BigDecimal.valueOf(-1)), ex.getTickNo());
+				result.add(order);
+				pos.orderCount(1);
+				optmsg = " <CLOSE profit>";
+			} else if ( pos.getCost().doubleValue()*(1-loss) > ex.getMid() ) {
+				// 決済（損切）
+				Order order = new Order(ex.getSymbol(), pos.getAmount().multiply(BigDecimal.valueOf(-1)), ex.getTickNo());
+				result.add(order);
+				pos.orderCount(1);
+				optmsg = " <CLOSE loss>";
+			}
+		/*
+		if ( nc < 0 && ex.getStatus1().startsWith("+") ) {
 			// 決済（順張り想定）
 			Order order = new Order(ex.getSymbol(), pos.getAmount().multiply(BigDecimal.valueOf(-1)), ex.getTickNo());
 			result.add(order);
 			pos.orderCount(1);
-		} else if ( nc > 0 && !ex.getStatus1().startsWith("+") ) {
+		} else if ( nc > 0 && ex.getStatus1().startsWith("-") ) {
 			// 決済（順張り想定）
 			Order order = new Order(ex.getSymbol(), pos.getAmount().multiply(BigDecimal.valueOf(-1)), ex.getTickNo());
 			result.add(order);
 			pos.orderCount(1);
+		*/
 		} else if ( uniq && ex.getVolatility1() >= volatility.doubleValue() ) {
 			// 新規
-			if ( ex.getStatusCount1() >= bandwalk && ex.getStatusCount2() >= bandwalk ) {
+			if ( ex.getStatusCount1() >= bandwalk /* && ex.getStatusCount2() >= bandwalk */ ) {
 				// バンドウォーク順張り or 逆張り
 				if ( ("+a2".equals(ex.getStatus1()) && ex.getStatus2().startsWith("+")) || ("-a2".equals(ex.getStatus1()) && ex.getStatus2().startsWith("+")) ) {
 					if (nowAmt.compareTo(maxamount) < 0) {
 						Order order = new Order(ex.getSymbol(), amount, ex.getTickNo());
 						result.add(order);
 						pos.orderCount(1);
+						optmsg = " <OPEN long>";
 					}
 				}
 				// バンドウォーク順張り or 逆張り
@@ -291,6 +337,7 @@ public class Algorithm {
 						Order order = new Order(ex.getSymbol(), amount.multiply(BigDecimal.valueOf(-1)), ex.getTickNo());
 						result.add(order);
 						pos.orderCount(1);
+						optmsg = " <OPEN short>";
 					}
 				}
 			} else {
@@ -300,6 +347,7 @@ public class Algorithm {
 						Order order = new Order(ex.getSymbol(), amount, ex.getTickNo());
 						result.add(order);
 						pos.orderCount(1);
+						optmsg = " <OPEN long>";
 					}
 				}
 				// 跳ね　順張り
@@ -308,13 +356,15 @@ public class Algorithm {
 						Order order = new Order(ex.getSymbol(), amount.multiply(BigDecimal.valueOf(-1)), ex.getTickNo());
 						result.add(order);
 						pos.orderCount(1);
+						optmsg = " <OPEN short>";
 					}
 				}
 			}
 		}
 		BigDecimal mid = null;
 		try { mid = BigDecimal.valueOf(ex.getMid()); } catch (Exception e) {}
-		log.debug(ex.getSymbol()+"("+ ex.getTickNo().toPlainString() +") = result["+result.size()+"] : status1="+ex.getStatus1()+" statusCount1="+ex.getStatusCount1()+" status2="+ex.getStatus2()+" statusCount2="+ex.getStatusCount2()+" nowAmt="+nowAmt+" "+pos.getPL(mid));
+		log.info(ex.getSymbol()+"("+ ex.getTickNo().toPlainString() +") = result["+result.size()+"] : status1="+ex.getStatus1()+" count1="+ex.getStatusCount1()
+				+" status2="+ex.getStatus2()+" count2="+ex.getStatusCount2()+" nowAmt="+nowAmt+" "+pos.getPL(mid)+optmsg);
 		return result;
 	}
 	
