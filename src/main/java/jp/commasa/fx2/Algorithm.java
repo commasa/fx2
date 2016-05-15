@@ -313,7 +313,7 @@ public class Algorithm {
 			if ( ex.getStatusCount1() >= bandwalk /* && ex.getStatusCount2() >= bandwalk */ ) {
 				// バンドウォーク順張り or 逆張り
 				if ( ("+a2".equals(ex.getStatus1()) && ex.getStatus2().startsWith("+")) || ("-a2".equals(ex.getStatus1()) && ex.getStatus2().startsWith("+")) ) {
-					if (nowAmt.compareTo(maxamount) < 0) {
+					if (nowAmt.compareTo(maxamount) < 0 && nc >= 0) {
 						Order order = new Order(ex.getSymbol(), amount, ex.getTickNo());
 						result.add(order);
 						pos.orderCount(1);
@@ -322,7 +322,7 @@ public class Algorithm {
 				}
 				// バンドウォーク順張り or 逆張り
 				if ( ("-a2".equals(ex.getStatus1()) && ex.getStatus2().startsWith("-")) || ("+a2".equals(ex.getStatus1()) && ex.getStatus2().startsWith("-")) ) {
-					if (nowAmt.compareTo(maxamount.multiply(BigDecimal.valueOf(-1))) > 0) {
+					if (nowAmt.compareTo(maxamount.multiply(BigDecimal.valueOf(-1))) > 0 && nc <= 0) {
 						Order order = new Order(ex.getSymbol(), amount.multiply(BigDecimal.valueOf(-1)), ex.getTickNo());
 						result.add(order);
 						pos.orderCount(1);
