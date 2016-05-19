@@ -332,7 +332,7 @@ public class Algorithm {
 			} else {
 				// 跳ね　順張り
 				if ("+a3".equals(ex.getStatus1())) {
-					if (nowAmt.compareTo(maxamount) < 0 && nc <= 0) {
+					if (nowAmt.compareTo(maxamount) < 0 && nc >= 0) {
 						Order order = new Order(ex.getSymbol(), amount, ex.getTickNo());
 						result.add(order);
 						pos.orderCount(1);
