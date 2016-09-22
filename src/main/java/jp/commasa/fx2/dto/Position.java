@@ -102,11 +102,15 @@ public class Position {
 		this.totalamount = this.totalamount.add(report.getCumQty());
 	} 
 
-	public String getPL(BigDecimal p) {
-		if (p==null) return "price is invalid.";
-		BigDecimal pl = this.amount.multiply(p).subtract(this.changeamount);
-		BigDecimal unit = (this.totalamount.compareTo(BigDecimal.ZERO) == 0 ? BigDecimal.ZERO.setScale(4, BigDecimal.ROUND_HALF_UP) : pl.divide(this.totalamount, 4, BigDecimal.ROUND_HALF_UP));
-		return "PL=" + pl.setScale(2, BigDecimal.ROUND_HALF_UP).toPlainString() + " UNIT=" + unit.toPlainString();
+	public BigDecimal getPL(Price p) {
+		BigDecimal rate = BigDecimal.ZERO;
+		int nc = this.amount.compareTo(BigDecimal.ZERO);
+		if ( nc < 0 ) {
+			rate = BigDecimal.valueOf(p.getAsk());
+		} else if ( nc > 0 ) {
+			rate = BigDecimal.valueOf(p.getBid());
+		}
+		return this.amount.multiply(rate).subtract(this.changeamount);
 	}
 
 	public void reset() {
@@ -132,5 +136,12 @@ public class Position {
 		}
 		return "Position [log=" + log + ", cost=" + cost + ", amount=" + amount + ", reports=" + sb.toString() + "]";
 	}
-	
+
+	public String toString(BigDecimal p) {
+		if (p==null) return "price is invalid.";
+		BigDecimal pl = this.amount.multiply(p).subtract(this.changeamount);;
+		BigDecimal unit = (this.totalamount.compareTo(BigDecimal.ZERO) == 0 ? BigDecimal.ZERO.setScale(4, BigDecimal.ROUND_HALF_UP) : pl.divide(this.totalamount, 4, BigDecimal.ROUND_HALF_UP));
+		return "Position [amount=" + amount + ", cost=" + cost + ", pl=" + pl + ", unit=" + unit + "]";
+	}
+
 }

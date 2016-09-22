@@ -107,7 +107,19 @@ public class OandaApp extends MessageCracker implements Application {
 			}
 		}
 		this.symbols = symbolList;
-		this.algorithm = new Algorithm(bundle);
+		try {
+			String value = bundle.getString("algorithm");
+			if ( "bw".equals(value) ) {
+				this.algorithm = new BwAlgorithm();
+			} else if ( "vote".equals(value) ) {
+				this.algorithm = new VoteAlgorithm();
+			}
+		} catch(Exception e) {
+			log.info("Parameter(algorithm) is invalid.", e);
+			this.algorithm = new BwAlgorithm();
+		}
+		log.info(this.algorithm.getClass().getSimpleName() + " init...");
+		this.algorithm.init(bundle);
 	}
 
 	@Override
@@ -437,11 +449,11 @@ public class OandaApp extends MessageCracker implements Application {
 		report.setAvgPx(BigDecimal.valueOf(avgPx.getValue()).setScale(5, BigDecimal.ROUND_HALF_UP));
 		report.setTransactTime(sdf.format(transactTime.getValue()));
 		report.setText(text.getValue());
-		algorithm.addReport(report);
+		algorithm.execReport(report);
 	}
 
 	public void close () {
-		log.info("application closing...");
+		log.info(this.algorithm.getClass().getSimpleName() + " closing...");
 		algorithm.finish();
 		/* タイミングによってうまくいかないことがあるので一旦保留
 		List<Order> orderList = algorithm.finish();
