@@ -83,20 +83,20 @@ public abstract class AbstractAlgorithm implements Algorithm {
 		// 決済
 		List<Order> result = new ArrayList<Order>();
 		BigDecimal nowAmt = pos.getAmount();
-		BigDecimal pl = pos.getPL(p);
+		BigDecimal pl = pos.getCostPL(p);
 		int plc = pl.compareTo(BigDecimal.ZERO);
-		if ( plc < 0 && loss.compareTo(pl.abs()) < 0 ) {
+		if ( plc < 0 && loss.compareTo(pl.abs()) < 0 && pos.getAmount().compareTo(BigDecimal.ZERO) != 0 ) {
 			// 決済（損切）
 			Order order = new Order(symbol, pos.getAmount().multiply(BigDecimal.valueOf(-1)), p.getTickNo());
 			result.add(order);
 			pos.orderCount(1);
-			log.info("ORDER <CLOSE loss>: symbol="+symbol+"("+p.getTickNo().toPlainString()+") pl="+pl+" nowAmt="+nowAmt);
-		} else if ( plc > 0 && profit.compareTo(pl.abs()) < 0 ) {
+			log.info("ORDER <CLOSE loss>: symbol="+symbol+"("+p.getTickNo().toPlainString()+") costpl="+pl+" nowAmt="+nowAmt);
+		} else if ( plc > 0 && profit.compareTo(pl.abs()) < 0 && pos.getAmount().compareTo(BigDecimal.ZERO) != 0 ) {
 			// 決済（利確）
 			Order order = new Order(symbol, pos.getAmount().multiply(BigDecimal.valueOf(-1)), p.getTickNo());
 			result.add(order);
 			pos.orderCount(1);
-			log.info("ORDER <CLOSE profit>: symbol="+symbol+"("+p.getTickNo().toPlainString()+") pl="+pl+" nowAmt="+nowAmt);
+			log.info("ORDER <CLOSE profit>: symbol="+symbol+"("+p.getTickNo().toPlainString()+") costpl="+pl+" nowAmt="+nowAmt);
 		}
 		// 新規
 		if ( result.size() == 0 ) {
@@ -104,24 +104,26 @@ public abstract class AbstractAlgorithm implements Algorithm {
 			if ( result != null && result.size() > 0 ) {
 				if ( nowAmt.abs().compareTo(maxamount) < 0 ) {
 					pos.orderCount(result.size());
-					log.info("ORDER <OPEN["+result.size()+"]>: symbol="+symbol+"("+p.getTickNo().toPlainString()+") pl="+pl+" nowAmt="+nowAmt);
+					log.info("ORDER <OPEN["+result.size()+"]>: symbol="+symbol+"("+p.getTickNo().toPlainString()+") costpl="+pl+" nowAmt="+nowAmt);
 				} else {
 					result = null;
-					log.info("ORDER <MAX AMOUNT>: symbol="+symbol+"("+p.getTickNo().toPlainString()+") pl="+pl+" nowAmt="+nowAmt);
+					log.info("ORDER <MAX AMOUNT>: symbol="+symbol+"("+p.getTickNo().toPlainString()+") costpl="+pl+" nowAmt="+nowAmt);
 				}
 			}
 		}
-		if ( this.reportInterval > 250 ) {
-			try {
-				this.reportInterval = 0;
-				BigDecimal mid = BigDecimal.valueOf(p.getMid());
-				if ( mid.compareTo(BigDecimal.ZERO) > 0 ) {
-					log.info("REPORT : "+symbol+": "+pos.toString(mid));
+		// PL通知
+		this.reportInterval++;
+		try {
+			BigDecimal mid = BigDecimal.valueOf(p.getMid());
+			if ( mid.compareTo(BigDecimal.ZERO) > 0 ) {
+				String plString = symbol+": "+pos.toString(mid);
+				jedis.publish("PL", plString);
+				if ( this.reportInterval > 550 ) {
+					log.info("REPORT : "+plString);
+					this.reportInterval = 0;
 				}
-			} catch (Exception e) {}
-		} else {
-			this.reportInterval++;
-		}
+			}
+		} catch (Exception e) {}
 		return result;
 	}
 

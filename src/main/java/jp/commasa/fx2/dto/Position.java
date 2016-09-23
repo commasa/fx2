@@ -102,15 +102,19 @@ public class Position {
 		this.totalamount = this.totalamount.add(report.getCumQty());
 	} 
 
-	public BigDecimal getPL(Price p) {
-		BigDecimal rate = BigDecimal.ZERO;
-		int nc = this.amount.compareTo(BigDecimal.ZERO);
-		if ( nc < 0 ) {
-			rate = BigDecimal.valueOf(p.getAsk());
-		} else if ( nc > 0 ) {
-			rate = BigDecimal.valueOf(p.getBid());
+	public BigDecimal getCostPL(Price p) {
+		if ( this.amount != null && this.cost != null && this.cost.compareTo(BigDecimal.ZERO) > 0 ) {
+			BigDecimal rate = BigDecimal.ZERO;
+			int nc = this.amount.compareTo(BigDecimal.ZERO);
+			if ( nc < 0 ) {
+				rate = BigDecimal.valueOf(p.getAsk());
+			} else if ( nc > 0 ) {
+				rate = BigDecimal.valueOf(p.getBid());
+			}
+			return this.amount.multiply(rate).subtract(this.amount.multiply(cost));
+		} else {
+			return BigDecimal.ZERO;
 		}
-		return this.amount.multiply(rate).subtract(this.changeamount);
 	}
 
 	public void reset() {
