@@ -16,6 +16,8 @@ public class VoteAlgorithm extends AbstractAlgorithm {
 	private int ma1 = size;
 	private int ma2 = size / 2;
 	private int ma3 = size / 4;
+	private int intervalCount = 0;
+	private int interval = 100;
 
 	@Override
 	protected void init() {
@@ -25,23 +27,35 @@ public class VoteAlgorithm extends AbstractAlgorithm {
 			ma1 = size;
 			ma2 = size / 2;
 			ma3 = size / 4;
+			log.info("Parameter(size) is "+ma1+","+ma2+","+ma3);
 		} catch(Exception e) {
 			log.info("Parameter(size) is invalid.", e);
+		}
+		try {
+			String value = this.bundle.getString("interval");
+			interval = Integer.valueOf(value);
+		} catch(Exception e) {
+			log.info("Parameter(interval) is invalid.", e);
 		}
 	}
 
 	@Override
 	protected List<Order> runAlgorithm(Price p) {
+		this.intervalCount++;
 		String symbol = p.getSymbol();
 		//レート処理
-		if (history.get(symbol) == null) history.put(symbol, new ArrayList<Price>());
 		List<Price> previous = history.get(symbol);
-		previous.add(p);
+		if (previous == null) {
+			previous = new ArrayList<Price>();
+			history.put(symbol, previous);
+		}
+		previous.add(new Price(p));
 		//保持対象外となったデータの削除
 		while (previous.size()>size) {
 			previous.remove(0);
 		}
 		if ( previous.size() < ma1 ) {
+			log.info("waiting...("+previous.size()+")");
 			return null;
 		}
 		double maBid1 = 0;
@@ -50,7 +64,7 @@ public class VoteAlgorithm extends AbstractAlgorithm {
 		double maAsk2 = 0;
 		double maBid3 = 0;
 		double maAsk3 = 0;
-		for ( int i=previous.size()-1; i>=0; i-- ) {
+		for ( int i=0; i<previous.size(); i++ ) {
 			maBid1 += previous.get(i).getBid();
 			maAsk1 += previous.get(i).getAsk();
 			if ( i >= previous.size()-ma2 ) {
@@ -75,26 +89,34 @@ public class VoteAlgorithm extends AbstractAlgorithm {
 		int voteBid3 = (maBid3 - p.getAsk() > 0 ? 1 : 0);
 		int voteAsk3 = (maAsk3 - p.getBid() < 0 ? 1 : 0);
 		List<Order> result = new ArrayList<Order>();
+		String optmsg = "vote NONE";
 		if ( voteAsk1 + voteAsk2 + voteAsk3 > 1 ) {
 			Order order = new Order(symbol, amount, p.getTickNo());
 			result.add(order);
-			log.info("vote ASK: "
-					+" bid("+voteBid1+","+voteBid2+","+voteBid3+" : "+maBid1+","+maBid2+","+maBid3+")"
-					+" ask("+voteAsk1+","+voteAsk2+","+voteAsk3+" : "+maAsk1+","+maAsk2+","+maAsk3+")"
-					+" "+p.getBid()+" "+p.getAsk());
+			optmsg = "vote ASK";
 		}
 		if ( voteBid1 + voteBid2 + voteBid3 > 1 ) {
 			Order order = new Order(symbol, amount.multiply(BigDecimal.valueOf(-1)), p.getTickNo());
 			result.add(order);
-			log.info("vote BID: "
-					+" bid("+voteBid1+","+voteBid2+","+voteBid3+" : "+maBid1+","+maBid2+","+maBid3+")"
-					+" ask("+voteAsk1+","+voteAsk2+","+voteAsk3+" : "+maAsk1+","+maAsk2+","+maAsk3+")"
-					+" "+p.getBid()+" "+p.getAsk());
+			optmsg = "vote BID";
 		}
 		if (result.size() > 1) {
 			result = null;
-			log.info("!!! vote BOTH: BUY & SELL !!!");
+			optmsg = "vote !!! BOTH !!!";
+		} else if (result.size() == 1) {
+			if ( this.intervalCount < this.interval ) {
+				result = null;
+				optmsg = "vote ! SKIP !";
+			} else {
+				this.intervalCount = 0;
+			}
 		}
+		log.info(optmsg+" ("+this.intervalCount+"): "+p.getBid()+" "+p.getAsk()
+//				+" bid("+voteBid1+","+voteBid2+","+voteBid3+" : "+maBid1+","+maBid2+","+maBid3+")"
+//				+" ask("+voteAsk1+","+voteAsk2+","+voteAsk3+" : "+maAsk1+","+maAsk2+","+maAsk3+")"
+				+" bid("+voteBid1+","+voteBid2+","+voteBid3+")"
+				+" ask("+voteAsk1+","+voteAsk2+","+voteAsk3+")"
+				);
 		return result;
 	}
 

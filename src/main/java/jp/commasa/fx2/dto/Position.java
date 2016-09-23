@@ -134,14 +134,14 @@ public class Position {
 		for (Trans r : reports) {
 			sb.append("{"+r.toString()+"},");
 		}
-		return "Position [log=" + log + ", cost=" + cost + ", amount=" + amount + ", reports=" + sb.toString() + "]";
+		return "Position [ amount=" + amount + ", cost=" + cost + ", reports=" + sb.toString() + " ]";
 	}
 
 	public String toString(BigDecimal p) {
 		if (p==null) return "price is invalid.";
 		BigDecimal pl = this.amount.multiply(p).subtract(this.changeamount);;
 		BigDecimal unit = (this.totalamount.compareTo(BigDecimal.ZERO) == 0 ? BigDecimal.ZERO.setScale(4, BigDecimal.ROUND_HALF_UP) : pl.divide(this.totalamount, 4, BigDecimal.ROUND_HALF_UP));
-		return "Position [amount=" + amount + ", cost=" + cost + ", pl=" + pl + ", unit=" + unit + "]";
+		return "Position [ amount=" + amount + ", cost=" + cost + ", pl=" + pl + ", unit=" + unit + " ]";
 	}
 
 }

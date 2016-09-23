@@ -68,9 +68,11 @@ public class BwAlgorithm extends AbstractAlgorithm {
 		PriceEx ex = new PriceEx(p);
 		PriceEx prev = null;
 		boolean uniq = false;
-		if (history.get(p.getSymbol()) == null)
-			history.put(p.getSymbol(), new ArrayList<PriceEx>());
 		List<PriceEx> previous = history.get(p.getSymbol());
+		if (previous == null) {
+			previous = new ArrayList<PriceEx>();
+			history.put(p.getSymbol(), previous);
+		}
 		if (previous.size() > 0)
 			prev = previous.get(previous.size() - 1);
 		if (prev != null) {

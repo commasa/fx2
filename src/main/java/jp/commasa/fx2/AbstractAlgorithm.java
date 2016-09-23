@@ -32,6 +32,7 @@ public abstract class AbstractAlgorithm implements Algorithm {
 	private BigDecimal profit = BigDecimal.valueOf(1000);
 	private BigDecimal loss = BigDecimal.valueOf(10000);
 	private BigDecimal maxamount = BigDecimal.valueOf(30000);
+	private int reportInterval = 0;
 
 	protected abstract void init(); 
 	protected abstract List<Order> runAlgorithm(Price p); 
@@ -84,13 +85,13 @@ public abstract class AbstractAlgorithm implements Algorithm {
 		BigDecimal nowAmt = pos.getAmount();
 		BigDecimal pl = pos.getPL(p);
 		int plc = pl.compareTo(BigDecimal.ZERO);
-		if ( plc < 0 && loss.compareTo(pl.abs()) > 0 ) {
+		if ( plc < 0 && loss.compareTo(pl.abs()) < 0 ) {
 			// 決済（損切）
 			Order order = new Order(symbol, pos.getAmount().multiply(BigDecimal.valueOf(-1)), p.getTickNo());
 			result.add(order);
 			pos.orderCount(1);
 			log.info("ORDER <CLOSE loss>: symbol="+symbol+"("+p.getTickNo().toPlainString()+") pl="+pl+" nowAmt="+nowAmt);
-		} else if ( plc > 0 && profit.compareTo(pl.abs()) > 0 ) {
+		} else if ( plc > 0 && profit.compareTo(pl.abs()) < 0 ) {
 			// 決済（利確）
 			Order order = new Order(symbol, pos.getAmount().multiply(BigDecimal.valueOf(-1)), p.getTickNo());
 			result.add(order);
@@ -100,7 +101,7 @@ public abstract class AbstractAlgorithm implements Algorithm {
 		// 新規
 		if ( result.size() == 0 ) {
 			result = runAlgorithm(p);
-			if ( result != null ) {
+			if ( result != null && result.size() > 0 ) {
 				if ( nowAmt.abs().compareTo(maxamount) < 0 ) {
 					pos.orderCount(result.size());
 					log.info("ORDER <OPEN["+result.size()+"]>: symbol="+symbol+"("+p.getTickNo().toPlainString()+") pl="+pl+" nowAmt="+nowAmt);
@@ -109,6 +110,17 @@ public abstract class AbstractAlgorithm implements Algorithm {
 					log.info("ORDER <MAX AMOUNT>: symbol="+symbol+"("+p.getTickNo().toPlainString()+") pl="+pl+" nowAmt="+nowAmt);
 				}
 			}
+		}
+		if ( this.reportInterval > 250 ) {
+			try {
+				this.reportInterval = 0;
+				BigDecimal mid = BigDecimal.valueOf(p.getMid());
+				if ( mid.compareTo(BigDecimal.ZERO) > 0 ) {
+					log.info("REPORT : "+symbol+": "+pos.toString(mid));
+				}
+			} catch (Exception e) {}
+		} else {
+			this.reportInterval++;
 		}
 		return result;
 	}
@@ -123,7 +135,7 @@ public abstract class AbstractAlgorithm implements Algorithm {
 		}
 		pos.addReport(Report.getTrans(report));
 		pos.orderCount(-1);
-		log.info(symbol+": "+pos.toString());
+		log.info("Execution : "+symbol+": "+pos.toString(report.getAvgPx()));
 	}
 
 	@Override
