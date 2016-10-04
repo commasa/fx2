@@ -91,12 +91,14 @@ public class VoteAlgorithm extends AbstractAlgorithm {
 		List<Order> result = new ArrayList<Order>();
 		String optmsg = "vote NONE";
 		if ( voteAsk1 + voteAsk2 + voteAsk3 > 1 ) {
-			Order order = new Order(symbol, amount, p.getTickNo());
+//			Order order = new Order(symbol, amount, p.getTickNo());
+			Order order = new Order(symbol, amount.multiply(BigDecimal.valueOf(-1)), p.getTickNo());
 			result.add(order);
 			optmsg = "vote ASK";
 		}
 		if ( voteBid1 + voteBid2 + voteBid3 > 1 ) {
-			Order order = new Order(symbol, amount.multiply(BigDecimal.valueOf(-1)), p.getTickNo());
+//			Order order = new Order(symbol, amount.multiply(BigDecimal.valueOf(-1)), p.getTickNo());
+			Order order = new Order(symbol, amount, p.getTickNo());
 			result.add(order);
 			optmsg = "vote BID";
 		}
