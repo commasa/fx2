@@ -12,7 +12,7 @@ import jp.commasa.fx2.dto.Price;
 public class VoteAlgorithm extends AbstractAlgorithm {
 
 	private Map<String, List<Price>> history = new HashMap<String, List<Price>>();
-	private int size = 100;
+	private int size = 10;
 	private int ma1 = size;
 	private int ma2 = size / 2;
 	private int ma3 = size / 4;
@@ -91,14 +91,14 @@ public class VoteAlgorithm extends AbstractAlgorithm {
 		List<Order> result = new ArrayList<Order>();
 		String optmsg = "vote NONE";
 		if ( voteAsk1 + voteAsk2 + voteAsk3 > 1 ) {
-//			Order order = new Order(symbol, amount, p.getTickNo());
-			Order order = new Order(symbol, amount.multiply(BigDecimal.valueOf(-1)), p.getTickNo());
+			Order order = new Order(symbol, amount, p.getTickNo());
+//			Order order = new Order(symbol, amount.multiply(BigDecimal.valueOf(-1)), p.getTickNo());
 			result.add(order);
 			optmsg = "vote ASK";
 		}
 		if ( voteBid1 + voteBid2 + voteBid3 > 1 ) {
-//			Order order = new Order(symbol, amount.multiply(BigDecimal.valueOf(-1)), p.getTickNo());
-			Order order = new Order(symbol, amount, p.getTickNo());
+			Order order = new Order(symbol, amount.multiply(BigDecimal.valueOf(-1)), p.getTickNo());
+//			Order order = new Order(symbol, amount, p.getTickNo());
 			result.add(order);
 			optmsg = "vote BID";
 		}
